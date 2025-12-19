@@ -1,7 +1,8 @@
 export default function SignInPage() {
     return (
-        <div className="bg-[url(/eve-DJydsZc9xrM-unsplash.jpg)] bg-cover bg-center flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
-            <div className="bg-white shadow-sm rounded-2xl min-w-lg min-h-96">
+        <div className="bg-[url(/carlos-torres-MHNjEBeLTgw-unsplash.jpg)] bg-cover bg-center flex min-h-screen items-center justify-center bg-white font-sans dark:bg-black">
+            <div className="absolute top-0 left-0 w-full h-full bg-white/50 backdrop-blur-lg z-10"></div>
+            <div className="bg-white shadow-sm rounded-2xl min-w-lg min-h-96 z-20">
                 <div className="p-4">
                     <h1 className="text-xl p-8">Welcome to Twilight Cloud</h1>
                     <div className="flex flex-col justify-center">
@@ -13,9 +14,11 @@ export default function SignInPage() {
                         </div>
                     </div>
                     <div className="px-8 pb-8">
-                        <button type="button" className="w-full bg-neutral-100 text-black py-2 px-4 rounded-md hover:bg-neutral-200 transition-colors duration-300">
-                            Sign in or Sign up
-                        </button>
+                        <a href="/auth/login">
+                            <button type="button" className="w-full bg-neutral-100 text-black py-2 px-4 rounded-md hover:bg-neutral-200 transition-colors duration-300">
+                                Sign in or Sign up
+                            </button>
+                        </a>
                     </div>
                 </div>
             </div>
