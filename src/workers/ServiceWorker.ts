@@ -1,8 +1,23 @@
 /// <reference lib="webworker" />
-import { generateCryptoKey } from "@/cipher/key";
 import { createDecryptStream } from "@/cipher/stream";
 
 declare const self: ServiceWorkerGlobalScope;
+
+let contentKey: CryptoKey | null = null;
+
+self.addEventListener("message", (event) => {
+    if (event.data?.type === "SET_KEY") {
+        const jwk = event.data.key;
+        if (jwk) {
+            crypto.subtle
+                .importKey("jwk", jwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"])
+                .then((key) => {
+                    contentKey = key;
+                })
+                .catch((err) => console.error("Failed to import key in Service Worker", err));
+        }
+    }
+});
 
 const VIRTUAL_PATH = "/virtual-dash/";
 
@@ -16,18 +31,33 @@ self.addEventListener("fetch", (event) => {
 
 async function handleEncryptedStream(url: URL): Promise<Response> {
     try {
-        // ファイル名抽出
-        const filename = url.pathname.replace(VIRTUAL_PATH, "");
+        if (!contentKey) {
+            console.error("Decryption key not available in Service Worker.");
+            return new Response("Decryption key not set in Service Worker", { status: 500 });
+        }
 
-        const apiUrl = `/api/get-signed-url?filename=${filename}&method=GET`;
+        const filename = url.pathname.replace(VIRTUAL_PATH, "");
+        const mediaId = url.searchParams.get("mediaId");
+
+        if (!mediaId) {
+            console.error("mediaId is missing from the request to the Service Worker");
+            return new Response("mediaId query parameter is required", { status: 400 });
+        }
+
+        const apiUrl = `/api/media/${mediaId}?filename=${encodeURIComponent(filename)}`;
+
         const apiRes = await fetch(apiUrl);
 
         if (!apiRes.ok) {
-            console.error(`Failed to get signed URL for ${filename}`);
-            return new Response("Signed URL Error", { status: 500 });
+            const errorText = await apiRes.text();
+            console.error(`Failed to get signed URL for ${filename}. Status: ${apiRes.status}. Body: ${errorText}`);
+            return new Response(`Signed URL Error: ${errorText}`, { status: apiRes.status, statusText: apiRes.statusText });
         }
 
         const { url: downloadUrl } = await apiRes.json();
+        if (!downloadUrl) {
+            return new Response("Signed URL not found in API response", { status: 500 });
+        }
 
         const upstreamRes = await fetch(downloadUrl);
 
@@ -35,19 +65,23 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
             return upstreamRes;
         }
 
-        // 復号ストリームを作成
         const reader = upstreamRes.body.getReader();
-        const decryptedStream = await createDecryptStream(await generateCryptoKey(), reader);
+        const decryptedStream = await createDecryptStream(contentKey, reader);
 
         const headers = new Headers(upstreamRes.headers);
 
         if (filename.endsWith(".mpd")) {
             headers.set("Content-Type", "application/dash+xml");
-        } else if (filename.endsWith(".webm")) {
-            headers.set("Content-Type", "video/webm");
+        } else {
+            const contentType = upstreamRes.headers.get("Content-Type");
+            if (contentType) {
+                headers.set("Content-Type", contentType);
+            }
         }
 
         headers.delete("Content-Length");
+        headers.delete("Content-Encoding");
+        headers.delete("accept-ranges");
 
         return new Response(decryptedStream, {
             status: 200,
@@ -55,12 +89,12 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         });
     } catch (error) {
         console.error("Stream Decryption Error:", error);
-        return new Response("Internal Decryption Error", { status: 500 });
+        return new Response("Internal Decryption Error in Service Worker", { status: 500 });
     }
 }
 
-self.addEventListener("install", () => {
-    self.skipWaiting();
+self.addEventListener("install", (event) => {
+    event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
