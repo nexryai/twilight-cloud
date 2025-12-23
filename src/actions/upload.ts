@@ -42,7 +42,7 @@ export async function getPresignedUrls(files: string[], type: string, title: str
             const command = new PutObjectCommand({
                 Bucket: BUCKET_NAME,
                 Key: `${videoId.toHexString()}/${file}`,
-                ContentType: file.endsWith(".mpd") ? "application/dash+xml" : type,
+                ContentType: file.endsWith(".mpd") ? "application/dash+xml" : "application/octet-stream",
             });
 
             const url = await getSignedUrl(s3Client, command, { expiresIn: 7200 });

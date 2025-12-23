@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
+        "copy-deps": "cp node_modules/ikaria.js/dist/assets/* .next/dev/static/media/",
         "dev": "next dev",
         "build": "next build",
         "build-sw": "rm -rf dist && vite build",
