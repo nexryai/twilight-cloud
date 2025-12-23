@@ -105,6 +105,9 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
                         const response = await fetch(url, {
                             method: "PUT",
                             body: uploadBlob,
+                            headers: {
+                                "Content-Type": "application/octet-stream",
+                            },
                         });
 
                         if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
