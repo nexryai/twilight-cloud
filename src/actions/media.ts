@@ -37,36 +37,55 @@ const getUserOrFail = async () => {
     return session.user;
 };
 
-export async function getVideos() {
+export async function getVideo(id: string): Promise<Video | null> {
+    const user = await getUserOrFail();
+
+    const media = await db.collection<Video>("videos").findOne({
+        _id: new ObjectId(id),
+        userId: user.id,
+    });
+
+    if (!media) {
+        return null;
+    }
+
+    if (media.userId !== user.id) {
+        throw new Error("Integrity Check Failed: invalid userId");
+    }
+
+    return JSON.parse(JSON.stringify(media)) as Video;
+}
+
+export async function getVideos(): Promise<Video[]> {
     const user = await getUserOrFail();
     const videos = await db.collection<Video>("videos").find({ userId: user.id }).sort({ name: 1 }).toArray();
 
     return JSON.parse(JSON.stringify(videos)) as Video[];
 }
 
-export async function getPlaylists() {
+export async function getPlaylists(): Promise<Playlist[]> {
     const user = await getUserOrFail();
     const playlists = await db.collection<Playlist>("playlists").find({ userId: user.id }).sort({ name: 1 }).toArray();
     return JSON.parse(JSON.stringify(playlists)) as Playlist[];
 }
 
-export async function createPlaylist(name: string) {
+export async function createPlaylist(name: string): Promise<ObjectId> {
     const user = await getUserOrFail();
     const result = await db.collection<Omit<Playlist, "_id">>("playlists").insertOne({
         name,
         userId: user.id,
         videoIds: [],
     });
-    
+
     return result.insertedId;
 }
 
-export async function addVideoToPlaylist(playlistId: string, videoId: string) {
+export async function addVideoToPlaylist(playlistId: string, videoId: string): Promise<void> {
     const user = await getUserOrFail();
     await db.collection<Playlist>("playlists").updateOne({ _id: new ObjectId(playlistId), userId: user.id }, { $addToSet: { videoIds: new ObjectId(videoId) } });
 }
 
-export async function removeVideoFromPlaylist(playlistId: string, videoId: string) {
+export async function removeVideoFromPlaylist(playlistId: string, videoId: string): Promise<void> {
     const user = await getUserOrFail();
     await db.collection<Playlist>("playlists").updateOne({ _id: new ObjectId(playlistId), userId: user.id }, { $pull: { videoIds: new ObjectId(videoId) } });
 }
