@@ -21,8 +21,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
       ikaria.js:
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: 0.2.1
+        version: 0.2.1
       mongodb:
         specifier: ^7.0.0
         version: 7.0.0
@@ -1367,8 +1367,8 @@ packages:
   html-entities@2.6.0:
     resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
 
-  ikaria.js@0.2.0:
-    resolution: {integrity: sha512-nEK3t9H4UvW7C8T2Qmz7Vdjw7z2kjQOh+NHyVViL8z8PgnUqp5tCgV6kwCBzs1YbutyfItjor/FNe3XSTkkYlg==}
+  ikaria.js@0.2.1:
+    resolution: {integrity: sha512-Bmw+MfeYPNfLAwwlq9847SESkkbSLxdN17npxXk74ZFN4UUEsSCt30t6jJi9y98wOGvsYg+aB3vcknTl7YZ2Bw==}
 
   immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
@@ -3325,7 +3325,7 @@ snapshots:
 
   html-entities@2.6.0: {}
 
-  ikaria.js@0.2.0: {}
+  ikaria.js@0.2.1: {}
 
   immediate@3.0.6: {}
 
