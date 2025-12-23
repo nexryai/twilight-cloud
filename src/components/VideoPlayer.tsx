@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/useMediaCaption: Ignore */
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 

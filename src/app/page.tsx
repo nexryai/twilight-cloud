@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-import { TbCpu, TbKey, TbUserCircle } from "react-icons/tb";
+import { TbUserCircle } from "react-icons/tb";
 
 const notes = [
     {
