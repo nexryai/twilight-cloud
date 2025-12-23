@@ -9,7 +9,6 @@ import { ObjectId } from "mongodb";
 import { auth } from "@/auth";
 import { client } from "@/db";
 
-// AwsClientの初期化
 const aws = new AwsClient({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
