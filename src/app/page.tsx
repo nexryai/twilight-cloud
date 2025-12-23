@@ -396,7 +396,7 @@ export default function Home() {
                 </div>
                 <main className="pb-20">{status === "ready" && contentKey ? <VideoDashboard contentKey={contentKey} /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
             </div>
-            <footer className="border-t py-12 px-16 flex justify-between items-center text-sm text-gray-500">
+            <footer className="border-t border-gray-200 py-12 px-16 flex justify-between items-center text-sm text-gray-500">
                 <p>&copy; {new Date().getFullYear()} nexryai All rights reserved.</p>
                 <p className="font-medium text-gray-400">Project of Ablaze</p>
             </footer>
