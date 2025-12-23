@@ -40,10 +40,10 @@ importers:
         version: 5.5.0(react@19.2.0)
       y-protocols:
         specifier: ^1.0.6
-        version: 1.0.6(yjs@13.6.27)
+        version: 1.0.6(yjs@13.6.28)
       yjs:
-        specifier: ^13.6.27
-        version: 13.6.27
+        specifier: ^13.6.28
+        version: 13.6.28
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.8
@@ -1010,6 +1010,11 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  lib0@0.2.115:
+    resolution: {integrity: sha512-noaW4yNp6hCjOgDnWWxW0vGXE3kZQI5Kqiwz+jIWXavI9J9WyfJ9zjsbQlQlgjIbHBrvlA/x3TSIXBUJj+0L6g==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   lie@3.1.1:
     resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
 
@@ -1419,8 +1424,8 @@ packages:
     peerDependencies:
       yjs: ^13.0.0
 
-  yjs@13.6.27:
-    resolution: {integrity: sha512-OIDwaflOaq4wC6YlPBy2L6ceKeKuF7DeTxx+jPzv1FHn9tCZ0ZwSRnUBxD05E3yed46fv/FWJbvR+Ud7x0L7zw==}
+  yjs@13.6.28:
+    resolution: {integrity: sha512-EgnDOXs8+hBVm6mq3/S89Kiwzh5JRbn7w2wXwbrMRyKy/8dOFsLvuIfC+x19ZdtaDc0tA9rQmdZzbqqNHG44wA==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   zod@4.2.1:
@@ -2112,6 +2117,10 @@ snapshots:
     dependencies:
       isomorphic.js: 0.2.5
 
+  lib0@0.2.115:
+    dependencies:
+      isomorphic.js: 0.2.5
+
   lie@3.1.1:
     dependencies:
       immediate: 3.0.6
@@ -2460,13 +2469,13 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
-  y-protocols@1.0.6(yjs@13.6.27):
+  y-protocols@1.0.6(yjs@13.6.28):
     dependencies:
       lib0: 0.2.114
-      yjs: 13.6.27
+      yjs: 13.6.28
 
-  yjs@13.6.27:
+  yjs@13.6.28:
     dependencies:
-      lib0: 0.2.114
+      lib0: 0.2.115
 
   zod@4.2.1: {}
