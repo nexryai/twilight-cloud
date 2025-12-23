@@ -19,14 +19,6 @@ const notes = [
     },
 ];
 
-const FullScreenModal = ({ children }: { children: React.ReactNode }) => {
-    return (
-        <div className="fixed inset-0 bg-white/10 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
-            <div className="p-6 max-w-3xl w-full">{children}</div>
-        </div>
-    );
-};
-
 const NoteCard = ({ title, content, updatedAt }: { title: string; content: string; updatedAt: Date }) => {
     return (
         <div className="bg-white shadow-md rounded-md p-4 hover:shadow-lg transition-shadow duration-300 hover:cursor-pointer">
