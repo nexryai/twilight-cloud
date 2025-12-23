@@ -14,7 +14,7 @@
     "dependencies": {
         "@auth0/nextjs-auth0": "^4.14.0",
         "@floating-ui/dom": "^1.7.4",
-        "@tiptap/core": "^3.10.8",
+        "@tiptap/core": "^3.14.0",
         "@tiptap/extension-collaboration": "^3.10.7",
         "@tiptap/extension-drag-handle": "^3.10.7",
         "@tiptap/extension-drag-handle-react": "^3.10.7",
