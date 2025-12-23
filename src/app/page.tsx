@@ -6,7 +6,6 @@ import { TbCpu, TbKey, TbUserCircle } from "react-icons/tb";
 
 import { getKeys, type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
 
-
 /**
  * ArrayBufferをBase64文字列に変換する
  */
@@ -49,7 +48,6 @@ async function deriveKekFromPassword(password: string, salt: BufferSource): Prom
     );
 }
 
-
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
 const notes = [
@@ -63,7 +61,7 @@ const notes = [
 
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg shadow-2xl">{children}</div>
+        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg">{children}</div>
     </div>
 );
 
@@ -259,33 +257,48 @@ export default function Home() {
             {status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
 
             <div className="flex-1">
-                <nav className="fixed top-0 left-0 w-full h-12 flex items-center justify-between px-6 z-40 bg-white/80 backdrop-blur-sm border-b">
-                    <span className="font-bold">Twilight Cloud</span>
-                    <TbUserCircle size={24} className="text-gray-600 cursor-pointer" />
-                </nav>
-
-                <div className="flex justify-between bg-[#f7f7f7] w-full h-64 mt-12">
-                    <div className="flex items-center ml-16">
-                        <div className="flex flex-col gap-2">
-                            <h1 className="text-3xl font-bold">My Documents</h1>
-                            <p className="text-gray-500">{notes.length} Secured Notes</p>
+                <div className="fixed top-0 left-0 z-50">
+                    <div className="flex justify-between items-center h-12 w-screen xbg-white/50 xbackdrop-blur-2xl">
+                        <div className="mx-6">
+                            <div className="flex items-center gap-4">
+                                <span className="font hidden">Twilight Cloud</span>
+                            </div>
+                        </div>
+                        <div className="mx-6">
+                            <div className="flex items-center gap-4 hover:cursor-pointer hover:bg-neutral-50/50 p-2 rounded-md">
+                                <div className="flex gap-2 items-center">
+                                    <TbUserCircle size={20} />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="Hero" className="h-64 w-1/3 object-cover" />
                 </div>
 
-                <main className="max-w-7xl mx-auto px-6 py-12">
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="flex justify-between bg-[#f7f7f7] bg-no-repeat bg-center w-full h-64">
+                    <div className="flex items-center ml-16">
+                        <div className="flex flex-col gap-4">
+                            <h1 className="text-2xl font-bold">My Videos</h1>
+                            <p>{notes.length} Notes</p>
+                        </div>
+                    </div>
+                    <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
+                </div>
+
+                <div className="px-16">
+                    <div className="max-w-7xl mx-auto px-6 py-12 grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {notes.map((note) => (
-                            <NoteCard key={note.id} {...note} />
+                            <NoteCard key={note.id} title={note.title} content={note.content} updatedAt={note.updatedAt} />
                         ))}
                     </div>
-                </main>
+                </div>
             </div>
-
-            <footer className="h-24 px-6 border-t flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-                <p>&copy; {new Date().getFullYear()} nexryai. All rights reserved.</p>
-                <p>Project of Ablaze</p>
+            <footer className="mt-32 h-24 px-6 flex md:flex-row flex-col justify-between items-center w-full">
+                <div>
+                    <p className="text-sm text-muted-foreground">&copy;{new Date().getFullYear()} nexryai All rights reserved.</p>
+                </div>
+                <div className="md:mb-0 mb-24">
+                    <p className="text-sm text-muted-foreground">Project of Ablaze</p>
+                </div>
             </footer>
         </div>
     );
