@@ -1,10 +1,13 @@
 /** biome-ignore-all lint/style/noNonNullAssertion: Ignore */
 "use server";
 
+import { headers } from "next/headers";
+
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { ObjectId } from "mongodb"; // Import ObjectId
+import { ObjectId } from "mongodb";
 
+import { auth } from "@/auth";
 import { client } from "@/db";
 
 const s3Client = new S3Client({
@@ -18,8 +21,16 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
-export const getPresignedUrls = async (files: string[], type: string) => {
-    const videoId = new ObjectId(); // Use ObjectId for videoId
+export async function getPresignedUrls(files: string[], type: string) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session) {
+        throw new Error("invalid session or not authenticated")
+    }
+
+    const videoId = new ObjectId();
     const manifest = files.find((file) => file.endsWith(".mpd"));
 
     if (!manifest) {
@@ -30,10 +41,11 @@ export const getPresignedUrls = async (files: string[], type: string) => {
         files.map(async (file) => {
             const command = new PutObjectCommand({
                 Bucket: BUCKET_NAME,
-                Key: `${videoId.toHexString()}/${file}`, // Use toHexString() for the path
-                ContentType: file.endsWith(".mpd") ? "application/dash+xml" : "video/mp4",
+                Key: `${videoId.toHexString()}/${file}`,
+                ContentType: file.endsWith(".mpd") ? "application/dash+xml" : type,
             });
-            const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+            
+            const url = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
             return {
                 url,
                 filename: file,
@@ -47,10 +59,11 @@ export const getPresignedUrls = async (files: string[], type: string) => {
         manifest: `${videoId.toHexString()}/${manifest}`,
         contentType: type,
         createdAt: new Date(),
+        userId: session.user.id
     });
 
     return {
         urls,
         manifestPath: `${videoId.toHexString()}/${manifest}`,
     };
-};
+}
