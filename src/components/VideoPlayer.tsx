@@ -20,18 +20,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
         const url = `/virtual-dash/${manifestName}?mediaId=${mediaId}`;
         const player = MediaPlayer().create();
 
-        // リクエストURLにmediaIdを付与するModifier
-        player.extend(
-            "RequestModifier",
-            () => ({
-                modifyRequestURL: (u: string) => {
-                    const uri = new URL(u, window.location.origin);
-                    uri.searchParams.set("mediaId", mediaId);
-                    return uri.toString();
-                },
-            }),
-            true,
-        );
+        const requestInterceptor = (request: any) => {
+            const uri = new URL(request.url, window.location.origin);
+            uri.searchParams.set("mediaId", mediaId);
+            request.url = uri.toString();
+
+            return Promise.resolve(request);
+        };
+
+        player.addRequestInterceptor(requestInterceptor);
 
         player.initialize(videoRef.current, url, false);
 
