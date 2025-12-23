@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { Binary } from "mongodb";
 
@@ -8,7 +9,6 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 
 import { Buffer } from "node:buffer";
-import { redirect } from "next/navigation";
 
 export interface PasswordEncryptedKey {
     salt: Binary;
@@ -43,18 +43,19 @@ const getUserOrFail = async () => {
     });
 
     if (!session) {
-        redirect("/signin")
+        console.log("invalid session or not authenticated");
+        redirect("/signin");
         throw new Error("invalid session or not authenticated");
     }
 
     return session.user;
-}
+};
 
 const getKeyRing = async () => {
     const user = await getUserOrFail();
     const keyRing = await db.collection<KeyRing>("keyrings").findOne({ userId: user.id });
     return { keyRing, userId: user.id };
-}
+};
 
 export async function getKeys() {
     const { keyRing } = await getKeyRing();
