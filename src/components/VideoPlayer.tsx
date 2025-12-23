@@ -1,64 +1,50 @@
 /** biome-ignore-all lint/a11y/useMediaCaption: Ignore */
+"use client";
+
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { MediaPlayer } from "dashjs";
 
-const VideoPlayer: React.FC = () => {
+interface VideoPlayerProps {
+    mediaId: string;
+    manifestName: string;
+}
+
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const playerRef = useRef<dashjs.MediaPlayerClass | null>(null);
-    const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        const initSw = async () => {
-            if ("serviceWorker" in navigator) {
-                try {
-                    const registration = await navigator.serviceWorker.register("/sw.js");
+        if (!videoRef.current) return;
 
-                    if (registration.installing) {
-                        await new Promise<void>((resolve) => {
-                            registration.installing?.addEventListener("statechange", (e: any) => {
-                                if (e.target.state === "activated") resolve();
-                            });
-                        });
-                    }
-                    await navigator.serviceWorker.ready;
-                    setIsReady(true);
-                } catch (error) {
-                    console.error("SW registration failed:", error);
-                }
-            }
-        };
-        initSw();
-    }, []);
-
-    useEffect(() => {
-        if (!isReady || !videoRef.current) return;
-
-        // Service Worker経由でOPFS内の /out/manifest.mpd にアクセス
-        const url = "/virtual-dash/manifest.mpd";
-
+        const url = `/virtual-dash/${manifestName}?mediaId=${mediaId}`;
         const player = MediaPlayer().create();
-        player.initialize(videoRef.current, url, true);
-        playerRef.current = player;
+
+        // リクエストURLにmediaIdを付与するModifier
+        player.extend(
+            "RequestModifier",
+            () => ({
+                modifyRequestURL: (u: string) => {
+                    const uri = new URL(u, window.location.origin);
+                    uri.searchParams.set("mediaId", mediaId);
+                    return uri.toString();
+                },
+            }),
+            true,
+        );
+
+        player.initialize(videoRef.current, url, false);
 
         player.on(MediaPlayer.events.ERROR, (e: any) => {
-            console.error("Dash Playback Error:", e);
+            console.error("Dash.js Error:", e.error?.message || e);
         });
 
         return () => {
-            if (playerRef.current) {
-                playerRef.current.destroy();
-                playerRef.current = null;
-            }
+            player.destroy();
         };
-    }, [isReady]);
+    }, [mediaId, manifestName]);
 
-    return (
-        <div>
-            <video ref={videoRef} controls playsInline style={{ width: "100%", maxWidth: "800px", backgroundColor: "#000" }} />
-        </div>
-    );
+    return <video ref={videoRef} controls playsInline style={{ width: "100%", aspectRatio: "16/9", backgroundColor: "#000" }} />;
 };
 
 export default VideoPlayer;
