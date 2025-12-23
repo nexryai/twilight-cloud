@@ -63,7 +63,7 @@ const notes = [
 
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="p-6 max-w-3xl w-full bg-white rounded-lg shadow-2xl border">{children}</div>
+        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg shadow-2xl">{children}</div>
     </div>
 );
 
