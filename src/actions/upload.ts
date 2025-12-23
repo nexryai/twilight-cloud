@@ -21,13 +21,13 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
-export async function getPresignedUrls(files: string[], type: string) {
+export async function getPresignedUrls(files: string[], type: string, title: string) {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
 
     if (!session) {
-        throw new Error("invalid session or not authenticated")
+        throw new Error("invalid session or not authenticated");
     }
 
     const videoId = new ObjectId();
@@ -44,7 +44,7 @@ export async function getPresignedUrls(files: string[], type: string) {
                 Key: `${videoId.toHexString()}/${file}`,
                 ContentType: file.endsWith(".mpd") ? "application/dash+xml" : type,
             });
-            
+
             const url = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
             return {
                 url,
@@ -56,10 +56,11 @@ export async function getPresignedUrls(files: string[], type: string) {
     const videos = client.db().collection("videos");
     await videos.insertOne({
         _id: videoId,
+        name: title,
         manifest: `${videoId.toHexString()}/${manifest}`,
         contentType: type,
         createdAt: new Date(),
-        userId: session.user.id
+        userId: session.user.id,
     });
 
     return {
