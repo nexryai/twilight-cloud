@@ -45,7 +45,7 @@ export default function SignInPage() {
 
                     <div className="flex border-b border-gray-200 mb-6 relative">
                         {(["signin", "signup"] as const).map((type) => (
-                            <button key={type} onClick={() => setFormType(type)} className={`flex-1 py-2 text-center text-sm font-medium relative transition-colors ${formType === type ? "text-black" : "text-gray-500"}`}>
+                            <button type="button" key={type} onClick={() => setFormType(type)} className={`flex-1 py-2 text-center text-sm font-medium relative transition-colors ${formType === type ? "text-black" : "text-gray-500"}`}>
                                 {type === "signin" ? "Sign In" : "Sign Up"}
                                 {formType === type && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
                             </button>
