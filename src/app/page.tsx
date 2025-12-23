@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AnimatePresence, motion } from "motion/react";
-import { TbCpu, TbKey, TbPlus, TbUserCircle } from "react-icons/tb";
+import { TbCpu, TbKey, TbPlus, TbUpload, TbUserCircle } from "react-icons/tb";
 
 import { getKeys, type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
@@ -48,7 +48,7 @@ const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="p-6 max-w-3xl w-full bg-white/80 shadow-2xl rounded-lg border border-white/20">{children}</div>
+        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg">{children}</div>
     </div>
 );
 
@@ -110,7 +110,14 @@ const VideoDashboard = () => {
     return (
         <div>
             <div className="px-16 pt-12">
-                <h2 className="text-2xl font-bold mb-6">Playlists</h2>
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center">
+                        <span className="text-2xl font-bold">Files</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full px-4 py-2 bg-gray-100/50 hover:bg-gray-100/70 cursor-pointer">
+                        <TbUpload /> Upload
+                    </div>
+                </div>
                 <div className="max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                     {/* All Videos Card */}
                     <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -4 }} onClick={() => setSelectedPlaylist(null)} className={`bg-white shadow-md rounded-md p-4 transition-shadow cursor-pointer ${!selectedPlaylist ? "ring-2 ring-blue-500" : ""}`}>
