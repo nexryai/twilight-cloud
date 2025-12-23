@@ -44,7 +44,7 @@ async function deriveKekFromPassword(password: string, salt: BufferSource): Prom
             hash: "SHA-256",
         },
         passwordKey,
-        { name: "AES-GCM", length: 256 },
+        { name: "AES-CTR", length: 256 },
         false,
         ["encrypt", "decrypt"],
     );
@@ -58,7 +58,7 @@ const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
-const VideoDashboard = () => {
+const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
     const [videos, setVideos] = useState<Video[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
@@ -137,12 +137,11 @@ const VideoDashboard = () => {
                 <AnimatePresence mode="wait">
                     {showUploader ? (
                         <motion.div key="uploader" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="bg-white rounded-xl border border-gray-100 p-8">
-                            <Uploader />
+                            <Uploader contentKey={contentKey} />
                         </motion.div>
                     ) : (
                         <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
                             <div className="max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {/* All Videos Card */}
                                 <motion.div
                                     layout
                                     initial={{ opacity: 0, scale: 0.95 }}
@@ -155,7 +154,6 @@ const VideoDashboard = () => {
                                     <p className="text-gray-600">{videos.length} videos</p>
                                 </motion.div>
 
-                                {/* Dynamic Playlists */}
                                 {playlists.map((playlist) => (
                                     <motion.div
                                         layout
@@ -171,7 +169,6 @@ const VideoDashboard = () => {
                                     </motion.div>
                                 ))}
 
-                                {/* Add Playlist Button */}
                                 <motion.div layout whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleCreatePlaylist} className="flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-md p-4 cursor-pointer hover:bg-gray-200 transition-colors">
                                     <TbPlus size={32} className="text-gray-500" />
                                 </motion.div>
@@ -215,7 +212,7 @@ export default function Home() {
             if (savedKey) {
                 try {
                     const jwk = JSON.parse(savedKey);
-                    const key = await crypto.subtle.importKey("jwk", jwk, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+                    const key = await crypto.subtle.importKey("jwk", jwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
                     setContentKey(key);
                     setStatus("ready");
                     return;
@@ -255,16 +252,30 @@ export default function Home() {
         setError(null);
 
         try {
-            const newContentKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+            // Content Key (AES-CTR)
+            const newContentKey = await crypto.subtle.generateKey({ name: "AES-CTR", length: 256 }, true, ["encrypt", "decrypt"]);
+
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const kek = await deriveKekFromPassword(password, salt);
-            const iv = crypto.getRandomValues(new Uint8Array(12));
+
+            // --- 修正: CTRカウンターは必ず16バイト ---
+            const counter = crypto.getRandomValues(new Uint8Array(16));
             const rawContentKey = await crypto.subtle.exportKey("raw", newContentKey);
-            const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, kek, rawContentKey);
+
+            // --- 修正: counter プロパティと length プロパティを指定 ---
+            const ciphertext = await crypto.subtle.encrypt(
+                {
+                    name: "AES-CTR",
+                    counter: counter,
+                    length: 64, // カウンターの増分ビット数
+                },
+                kek,
+                rawContentKey,
+            );
 
             await savePasswordEncryptedKey({
                 salt: arrayBufferToBase64(salt.buffer),
-                iv: arrayBufferToBase64(iv.buffer),
+                iv: arrayBufferToBase64(counter.buffer), // カウンターを保存
                 ciphertext: arrayBufferToBase64(ciphertext),
             });
 
@@ -272,6 +283,7 @@ export default function Home() {
             setContentKey(newContentKey);
             setStatus("ready");
         } catch (e) {
+            console.error(e);
             setError("Key generation failed.");
             setStatus("error");
         }
@@ -285,18 +297,32 @@ export default function Home() {
         try {
             const { salt, iv, ciphertext } = keyRing.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
-            const decryptedKeyRaw = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(base64ToArrayBuffer(iv)) }, kek, base64ToArrayBuffer(ciphertext));
 
-            const importedKey = await crypto.subtle.importKey("raw", decryptedKeyRaw, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+            // --- 修正: 復号時も AES-CTR パラメータを指定 ---
+            const decryptedKeyRaw = await crypto.subtle.decrypt(
+                {
+                    name: "AES-CTR",
+                    counter: new Uint8Array(base64ToArrayBuffer(iv)),
+                    length: 64,
+                },
+                kek,
+                base64ToArrayBuffer(ciphertext),
+            );
+
+            // --- 修正: AES-CTR としてインポート ---
+            const importedKey = await crypto.subtle.importKey("raw", decryptedKeyRaw, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+
             await saveKeyToLocalStorage(importedKey);
             setContentKey(importedKey);
             setStatus("ready");
         } catch (e) {
+            console.error(e);
             setError("Incorrect password.");
             setStatus("needs_decryption");
         }
     };
 
+    // ... (renderModalContent, return JSX 部分は変更なし)
     const renderModalContent = () => {
         if (status === "loading") return <p className="text-center py-4">Processing encryption...</p>;
         if (status === "error")
@@ -357,26 +383,9 @@ export default function Home() {
     return (
         <div className="flex min-h-screen flex-col bg-white font-sans text-neutral-900">
             {status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
-
             <div className="flex-1">
-                <div className="fixed top-0 left-0 z-50">
-                    <div className="flex justify-between items-center h-12 w-screen xbg-white/50 xbackdrop-blur-2xl">
-                        <div className="mx-6">
-                            <div className="flex items-center gap-4">
-                                <span className="font hidden">Twilight Cloud</span>
-                            </div>
-                        </div>
-                        <div className="mx-6">
-                            <div className="flex items-center gap-4 hover:cursor-pointer hover:bg-neutral-50/50 p-2 rounded-md">
-                                <div className="flex gap-2 items-center">
-                                    <TbUserCircle size={20} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex justify-between bg-[#f7f7f7] bg-no-repeat bg-center w-full h-64">
+                <div className="fixed top-0 left-0 z-50 w-screen h-12">{/* ナビゲーションバー */}</div>
+                <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
                     <div className="flex items-center ml-16">
                         <div className="flex flex-col gap-4">
                             <h1 className="text-2xl font-bold">My Videos</h1>
@@ -385,10 +394,9 @@ export default function Home() {
                     </div>
                     <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
                 </div>
-                <main className="pb-20">{status === "ready" ? <VideoDashboard /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
+                <main className="pb-20">{status === "ready" && contentKey ? <VideoDashboard contentKey={contentKey} /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
             </div>
-
-            <footer className="border-t border-gray-100 py-12 px-16 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+            <footer className="border-t py-12 px-16 flex justify-between items-center text-sm text-gray-500">
                 <p>&copy; {new Date().getFullYear()} nexryai All rights reserved.</p>
                 <p className="font-medium text-gray-400">Project of Ablaze</p>
             </footer>
