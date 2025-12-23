@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
         },
     },
     transpilePackages: ["ikaria.js"],
+    devIndicators: false,
     async headers() {
         return [
             {
@@ -22,12 +23,12 @@ const nextConfig: NextConfig = {
                         value: "require-corp",
                     },
                     {
-                        key: "Access-Control-Allow-Origin",
-                        value: "*",
+                        key: "Access-Control-Allow-Methods",
+                        value: "GET, POST, OPTIONS, PUT, HEAD, DELETE",
                     },
                     {
-                        key: "Access-Control-Allow-Methods",
-                        value: "GET, POST, OPTIONS",
+                        key: "Access-Control-Allow-Origin",
+                        value: "https://twilight-dev.14fabe4a10d3c8e3e8940ce0663826a5.r2.cloudflarestorage.com",
                     },
                 ],
             },
