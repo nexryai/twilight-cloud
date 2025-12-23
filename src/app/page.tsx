@@ -258,16 +258,14 @@ export default function Home() {
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const kek = await deriveKekFromPassword(password, salt);
 
-            // --- 修正: CTRカウンターは必ず16バイト ---
             const counter = crypto.getRandomValues(new Uint8Array(16));
             const rawContentKey = await crypto.subtle.exportKey("raw", newContentKey);
 
-            // --- 修正: counter プロパティと length プロパティを指定 ---
             const ciphertext = await crypto.subtle.encrypt(
                 {
                     name: "AES-CTR",
                     counter: counter,
-                    length: 64, // カウンターの増分ビット数
+                    length: 64,
                 },
                 kek,
                 rawContentKey,
@@ -275,7 +273,7 @@ export default function Home() {
 
             await savePasswordEncryptedKey({
                 salt: arrayBufferToBase64(salt.buffer),
-                iv: arrayBufferToBase64(counter.buffer), // カウンターを保存
+                iv: arrayBufferToBase64(counter.buffer),
                 ciphertext: arrayBufferToBase64(ciphertext),
             });
 
@@ -298,7 +296,6 @@ export default function Home() {
             const { salt, iv, ciphertext } = keyRing.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
 
-            // --- 修正: 復号時も AES-CTR パラメータを指定 ---
             const decryptedKeyRaw = await crypto.subtle.decrypt(
                 {
                     name: "AES-CTR",
@@ -309,7 +306,6 @@ export default function Home() {
                 base64ToArrayBuffer(ciphertext),
             );
 
-            // --- 修正: AES-CTR としてインポート ---
             const importedKey = await crypto.subtle.importKey("raw", decryptedKeyRaw, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
 
             await saveKeyToLocalStorage(importedKey);
@@ -322,7 +318,6 @@ export default function Home() {
         }
     };
 
-    // ... (renderModalContent, return JSX 部分は変更なし)
     const renderModalContent = () => {
         if (status === "loading") return <p className="text-center py-4">Processing encryption...</p>;
         if (status === "error")
