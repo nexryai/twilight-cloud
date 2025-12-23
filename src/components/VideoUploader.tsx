@@ -71,7 +71,7 @@ const VideoUploader: React.FC = () => {
                 fileList.push(name);
             }
 
-            const { urls, manifestPath } = await getPresignedUrls(fileList, selectedFile.type);
+            const { urls, manifestPath } = await getPresignedUrls(fileList, selectedFile.type, selectedFile.name);
 
             setStatusMessage("アップロード中...");
 
