@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { TbCpu, TbKey, TbUserCircle } from "react-icons/tb";
+import { AnimatePresence, motion } from "motion/react";
+import { TbCpu, TbKey, TbPlus, TbUserCircle } from "react-icons/tb";
 
 import { getKeys, type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
+import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
 
-/**
- * ArrayBufferをBase64文字列に変換する
- */
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let binary = "";
@@ -18,9 +17,6 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     return window.btoa(binary);
 }
 
-/**
- * Base64文字列をArrayBufferに変換する
- */
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binary_string = window.atob(base64);
     const bytes = new Uint8Array(binary_string.length);
@@ -50,28 +46,121 @@ async function deriveKekFromPassword(password: string, salt: BufferSource): Prom
 
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
-const notes = [
-    {
-        id: "1",
-        title: "First Note",
-        content: "This is the content of the first note.",
-        updatedAt: new Date(),
-    },
-];
-
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg">{children}</div>
+        <div className="p-6 max-w-3xl w-full bg-white/80 shadow-2xl rounded-lg border border-white/20">{children}</div>
     </div>
 );
 
-const NoteCard = ({ title, content, updatedAt }: { title: string; content: string; updatedAt: Date }) => (
-    <div className="bg-white shadow-md rounded-md p-4 hover:shadow-lg transition-shadow duration-300 hover:cursor-pointer">
-        <h2 className="text-lg font-semibold mb-2">{title}</h2>
-        <p className="text-gray-600 mb-4">{content}</p>
-        <span className="text-sm text-gray-400">Last updated: {updatedAt.toLocaleDateString()}</span>
-    </div>
-);
+const VideoDashboard = () => {
+    const [videos, setVideos] = useState<Video[]>([]);
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const [videosData, playlistsData] = await Promise.all([getVideos(), getPlaylists()]);
+                setVideos(videosData);
+                setPlaylists(playlistsData);
+            } catch (error) {
+                console.error("Failed to fetch media data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleCreatePlaylist = async () => {
+        const playlistName = prompt("Enter new playlist name:");
+        if (playlistName) {
+            try {
+                await createPlaylist(playlistName);
+                const playlistsData = await getPlaylists();
+                setPlaylists(playlistsData);
+            } catch (error) {
+                console.error("Failed to create playlist", error);
+            }
+        }
+    };
+
+    const filteredVideos = useMemo(() => {
+        if (!selectedPlaylist) return videos;
+        const videoIdsInPlaylist = new Set(selectedPlaylist.videoIds.map((id) => id.toString()));
+        return videos.filter((video) => videoIdsInPlaylist.has(video._id.toString()));
+    }, [videos, selectedPlaylist]);
+
+    const groupedVideos = useMemo(() => {
+        return filteredVideos.reduce(
+            (acc, video) => {
+                const firstLetter = video.name?.[0]?.toUpperCase() ?? "#";
+                if (!acc[firstLetter]) acc[firstLetter] = [];
+                acc[firstLetter].push(video);
+                return acc;
+            },
+            {} as Record<string, Video[]>,
+        );
+    }, [filteredVideos]);
+
+    if (loading) return <div className="text-center p-12 text-gray-500 animate-pulse">Loading media...</div>;
+
+    return (
+        <div>
+            <div className="px-16 pt-12">
+                <h2 className="text-2xl font-bold mb-6">Playlists</h2>
+                <div className="max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    {/* All Videos Card */}
+                    <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} whileHover={{ y: -4 }} onClick={() => setSelectedPlaylist(null)} className={`bg-white shadow-md rounded-md p-4 transition-shadow cursor-pointer ${!selectedPlaylist ? "ring-2 ring-blue-500" : ""}`}>
+                        <h2 className="text-lg font-semibold mb-2">All Videos</h2>
+                        <p className="text-gray-600">{videos.length} videos</p>
+                    </motion.div>
+
+                    {/* Dynamic Playlists */}
+                    {playlists.map((playlist) => (
+                        <motion.div
+                            layout
+                            key={playlist._id.toString()}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            whileHover={{ y: -4 }}
+                            onClick={() => setSelectedPlaylist(playlist)}
+                            className={`bg-white shadow-md rounded-md p-4 transition-shadow cursor-pointer ${selectedPlaylist?._id.toString() === playlist._id.toString() ? "ring-2 ring-blue-500" : ""}`}
+                        >
+                            <h2 className="text-lg font-semibold mb-2">{playlist.name}</h2>
+                            <p className="text-gray-600">{playlist.videoIds.length} videos</p>
+                        </motion.div>
+                    ))}
+
+                    {/* Add Playlist Button */}
+                    <motion.div layout whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleCreatePlaylist} className="flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-md p-4 cursor-pointer hover:bg-gray-200 transition-colors">
+                        <TbPlus size={32} className="text-gray-500" />
+                    </motion.div>
+                </div>
+            </div>
+
+            <div className="px-16 pt-12">
+                <AnimatePresence mode="popLayout">
+                    {Object.entries(groupedVideos).map(([letter, vids]) => (
+                        <motion.div layout key={letter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                            <h3 className="text-xl font-bold mt-8 mb-4 border-b pb-2">{letter}</h3>
+                            <ul className="space-y-3">
+                                {vids.map((video) => (
+                                    <motion.li layout key={video._id.toString()} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="bg-white p-3 rounded-md shadow-sm hover:bg-gray-50 transition-colors border border-gray-100">
+                                        {video.name}
+                                    </motion.li>
+                                ))}
+                            </ul>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+};
+
 
 export default function Home() {
     const [status, setStatus] = useState<"loading" | "needs_generation" | "needs_decryption" | "ready" | "error">("loading");
@@ -92,12 +181,11 @@ export default function Home() {
                     setStatus("ready");
                     return;
                 } catch (e) {
-                    console.error("Failed to import key from localStorage", e);
+                    console.error("Local key invalid", e);
                     localStorage.removeItem(KEY_STORAGE_ID);
                 }
             }
 
-            // ローカルにない場合、サーバーから暗号化された鍵を取得
             try {
                 const keys = await getKeys();
                 if (!keys) {
@@ -107,7 +195,6 @@ export default function Home() {
                     setStatus("needs_decryption");
                 }
             } catch (e) {
-                console.error(e);
                 setError("Could not connect to the server.");
                 setStatus("error");
             }
@@ -129,16 +216,9 @@ export default function Home() {
         setError(null);
 
         try {
-            // CEC生成
             const newContentKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
-
-            // PBKDF2用のSaltを生成
             const salt = crypto.getRandomValues(new Uint8Array(16));
-
-            // ユーザー入力パスワードからKEKを導出
             const kek = await deriveKekFromPassword(password, salt);
-
-            // KEKを使用してCECを暗号化
             const iv = crypto.getRandomValues(new Uint8Array(12));
             const rawContentKey = await crypto.subtle.exportKey("raw", newContentKey);
             const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, kek, rawContentKey);
@@ -153,84 +233,68 @@ export default function Home() {
             setContentKey(newContentKey);
             setStatus("ready");
         } catch (e) {
-            console.error(e);
-            setError("An unexpected error occurred during key generation.");
+            setError("Key generation failed.");
             setStatus("error");
         }
     };
 
     const handlePasswordDecrypt = async () => {
-        if (!keyRing?.passwordEncryptedKey) {
-            setError("No password-encrypted key found.");
-            return;
-        }
+        if (!keyRing?.passwordEncryptedKey) return;
         setStatus("loading");
         setError(null);
 
         try {
             const { salt, iv, ciphertext } = keyRing.passwordEncryptedKey;
-            const saltBuffer = new Uint8Array(base64ToArrayBuffer(salt));
-            const ivBuffer = new Uint8Array(base64ToArrayBuffer(iv));
-            const ciphertextBuffer = base64ToArrayBuffer(ciphertext);
-
-            const kek = await deriveKekFromPassword(password, saltBuffer);
-
-            const decryptedKeyRaw = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBuffer }, kek, ciphertextBuffer);
+            const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
+            const decryptedKeyRaw = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(base64ToArrayBuffer(iv)) }, kek, base64ToArrayBuffer(ciphertext));
 
             const importedKey = await crypto.subtle.importKey("raw", decryptedKeyRaw, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
-
             await saveKeyToLocalStorage(importedKey);
             setContentKey(importedKey);
             setStatus("ready");
         } catch (e) {
-            console.error(e);
-            setError("Incorrect password or decryption failed.");
+            setError("Incorrect password.");
             setStatus("needs_decryption");
         }
     };
 
-    const handleWebAuthnDecrypt = () => {
-        alert("WebAuthn PRF is not yet implemented.");
-    };
-
     const renderModalContent = () => {
-        if (status === "loading") return <p className="text-center py-4">Processing...</p>;
-        if (status === "error") {
+        if (status === "loading") return <p className="text-center py-4">Processing encryption...</p>;
+        if (status === "error")
             return (
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4 text-red-600">Error</h2>
+                    <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
                     <p className="mb-4">{error}</p>
                     <button type="button" onClick={() => window.location.reload()} className="text-blue-600 underline">
                         Retry
                     </button>
                 </div>
             );
-        }
-        if (status === "needs_generation") {
+
+        if (status === "needs_generation")
             return (
                 <div>
                     <h2 className="text-2xl font-bold mb-2">Setup Encryption</h2>
-                    <p className="mb-6 text-gray-600">Please set a strong password. This password will protect your encryption key. We cannot recover this password for you.</p>
-                    <input type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 border rounded-md mb-4 focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <p className="mb-6 text-gray-600 text-sm">Set a password to protect your media keys. This cannot be recovered.</p>
+                    <input type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
                     {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
                     <div className="flex justify-end">
-                        <button type="button" onClick={handleGenerateKey} disabled={password.length < 8} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                        <button type="button" onClick={handleGenerateKey} disabled={password.length < 8} className="bg-blue-600 text-white px-6 py-2 rounded-md disabled:opacity-50">
                             Create Key
                         </button>
                     </div>
                 </div>
             );
-        }
-        if (status === "needs_decryption") {
+
+        if (status === "needs_decryption")
             return (
                 <div>
                     <h2 className="text-2xl font-bold mb-4">Decrypt Access</h2>
-                    <p className="mb-6 text-gray-600">Enter your password to access your encrypted notes.</p>
                     {!useHardware ? (
-                        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePasswordDecrypt()} className="w-full p-3 border rounded-md mb-4 focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePasswordDecrypt()} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
                     ) : (
                         <div className="flex flex-col items-center p-8 border-2 border-dashed rounded-lg mb-4">
-                            <button type="button" onClick={handleWebAuthnDecrypt} className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full hover:bg-gray-100 transition-colors">
+                            <button type="button" onClick={() => alert("WebAuthn PRF required")} className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full hover:bg-gray-100">
                                 <TbCpu size={24} /> <span>Use Hardware Key</span> <TbKey size={24} />
                             </button>
                         </div>
@@ -241,19 +305,18 @@ export default function Home() {
                             {useHardware ? "Use Password" : "Use Passkey (WebAuthn)"}
                         </button>
                         {!useHardware && (
-                            <button type="button" onClick={handlePasswordDecrypt} className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                            <button type="button" onClick={handlePasswordDecrypt} className="bg-blue-600 text-white px-6 py-2 rounded-md">
                                 Decrypt
                             </button>
                         )}
                     </div>
                 </div>
             );
-        }
         return null;
     };
 
     return (
-        <div className="flex min-h-screen flex-col bg-white font-sans">
+        <div className="flex min-h-screen flex-col bg-white font-sans text-neutral-900">
             {status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
 
             <div className="flex-1">
@@ -278,27 +341,17 @@ export default function Home() {
                     <div className="flex items-center ml-16">
                         <div className="flex flex-col gap-4">
                             <h1 className="text-2xl font-bold">My Videos</h1>
-                            <p>{notes.length} Notes</p>
+                            <p>1 Notes</p>
                         </div>
                     </div>
                     <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
                 </div>
-
-                <div className="px-16">
-                    <div className="max-w-7xl mx-auto px-6 py-12 grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {notes.map((note) => (
-                            <NoteCard key={note.id} title={note.title} content={note.content} updatedAt={note.updatedAt} />
-                        ))}
-                    </div>
-                </div>
+                <main className="px-16 pb-20">{status === "ready" ? <VideoDashboard /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
             </div>
-            <footer className="mt-32 h-24 px-6 flex md:flex-row flex-col justify-between items-center w-full">
-                <div>
-                    <p className="text-sm text-muted-foreground">&copy;{new Date().getFullYear()} nexryai All rights reserved.</p>
-                </div>
-                <div className="md:mb-0 mb-24">
-                    <p className="text-sm text-muted-foreground">Project of Ablaze</p>
-                </div>
+
+            <footer className="border-t border-gray-100 py-12 px-16 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+                <p>&copy; {new Date().getFullYear()} nexryai All rights reserved.</p>
+                <p className="font-medium text-gray-400">Project of Ablaze</p>
             </footer>
         </div>
     );
