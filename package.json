@@ -26,6 +26,7 @@
         "@tiptap/starter-kit": "^3.13.0",
         "@tiptap/suggestion": "^3.10.7",
         "@tiptap/y-tiptap": "^3.0.1",
+        "better-auth": "^1.4.7",
         "next": "16.0.10",
         "react": "19.2.0",
         "react-dom": "19.2.0",
