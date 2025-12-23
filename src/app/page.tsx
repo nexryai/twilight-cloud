@@ -179,13 +179,21 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                     {Object.entries(groupedVideos).map(([letter, vids]) => (
                                         <motion.div layout key={letter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                                             <h3 className="text-xl font-bold mt-8 mb-4 border-b pb-2">{letter}</h3>
-                                            <ul className="space-y-3">
+                                            <div className="space-y-3 flex flex-col">
                                                 {vids.map((video) => (
-                                                    <motion.li layout key={video._id.toString()} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="bg-white p-3 rounded-md shadow-sm hover:bg-gray-50 transition-colors border border-gray-100">
+                                                    <motion.a
+                                                        href={`/player/${video._id}`}
+                                                        layout
+                                                        key={video._id.toString()}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        exit={{ opacity: 0, x: 10 }}
+                                                        className="bg-white p-3 rounded-md shadow-sm hover:bg-gray-50 transition-colors border border-gray-100"
+                                                    >
                                                         {video.name}
-                                                    </motion.li>
+                                                    </motion.a>
                                                 ))}
-                                            </ul>
+                                            </div>
                                         </motion.div>
                                     ))}
                                 </AnimatePresence>
