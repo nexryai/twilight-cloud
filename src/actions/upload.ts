@@ -3,22 +3,20 @@
 
 import { headers } from "next/headers";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { AwsClient } from "aws4fetch";
 import { ObjectId } from "mongodb";
 
 import { auth } from "@/auth";
 import { client } from "@/db";
 
-const s3Client = new S3Client({
-    endpoint: process.env.AWS_S3_ENDPOINT!,
+// AwsClientの初期化
+const aws = new AwsClient({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     region: process.env.AWS_S3_REGION!,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
 });
 
+const S3_ENDPOINT = process.env.AWS_S3_ENDPOINT!;
 const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
 export async function getPresignedUrls(files: string[], type: string, title: string) {
@@ -39,15 +37,24 @@ export async function getPresignedUrls(files: string[], type: string, title: str
 
     const urls = await Promise.all(
         files.map(async (file) => {
-            const command = new PutObjectCommand({
-                Bucket: BUCKET_NAME,
-                Key: `${videoId.toHexString()}/${file}`,
-                ContentType: file.endsWith(".mpd") ? "application/dash+xml" : "application/octet-stream",
+            const objectKey = `${videoId.toHexString()}/${file}`;
+            const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
+
+            url.searchParams.set("X-Amz-Expires", "7200");
+
+            const signedRequest = await aws.sign(url.toString(), {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/octet-stream",
+                },
+                aws: {
+                    signQuery: true,
+                    service: "s3",
+                },
             });
 
-            const url = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
             return {
-                url,
+                url: signedRequest.url,
                 filename: file,
             };
         }),
