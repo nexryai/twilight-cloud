@@ -40,7 +40,7 @@ export async function getPresignedUrls(files: string[], type: string, title: str
             const objectKey = `${videoId.toHexString()}/${file}`;
             const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
 
-            url.searchParams.set("X-Amz-Expires", "7200");
+            url.searchParams.set("X-Amz-Expires", "3600");
 
             const signedRequest = await aws.sign(url.toString(), {
                 method: "PUT",
