@@ -5,43 +5,8 @@ import { useEffect, useState } from "react";
 import { TbCpu, TbKey } from "react-icons/tb";
 
 import { getKeys, type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
+import { arrayBufferToBase64, base64ToArrayBuffer, deriveKekFromPassword } from "@/cipher/helper";
 import VideoDashboard from "@/components/VideoDashboard";
-
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-};
-
-const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
-    const binary_string = window.atob(base64);
-    const bytes = new Uint8Array(binary_string.length);
-    for (let i = 0; i < binary_string.length; i++) {
-        bytes[i] = binary_string.charCodeAt(i);
-    }
-    return bytes.buffer;
-};
-
-const deriveKekFromPassword = async (password: string, salt: BufferSource): Promise<CryptoKey> => {
-    const encoder = new TextEncoder();
-    const passwordKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-
-    return await crypto.subtle.deriveKey(
-        {
-            name: "PBKDF2",
-            salt: salt,
-            iterations: 100000,
-            hash: "SHA-256",
-        },
-        passwordKey,
-        { name: "AES-CTR", length: 256 },
-        false,
-        ["encrypt", "decrypt"],
-    );
-};
 
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
