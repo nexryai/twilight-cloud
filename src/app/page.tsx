@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 
 import { AnimatePresence, motion } from "motion/react";
-import { TbArrowLeft, TbCpu, TbKey, TbPlus, TbUpload, TbVideo } from "react-icons/tb";
+import { TbArrowLeft, TbCpu, TbKey, TbMoodPuzzled, TbPlus, TbUpload, TbVideo } from "react-icons/tb";
 
 import { getKeys, type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
@@ -189,6 +189,12 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                             </div>
                                         </motion.div>
                                     ))}
+                                    {filteredVideos.length === 0 && (
+                                        <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4 items-center text-gray-500 py-12 min-h-128">
+                                            <TbMoodPuzzled size={32} />
+                                            No videos found.
+                                        </motion.div>
+                                    )}
                                 </AnimatePresence>
                             </div>
                         </motion.div>
