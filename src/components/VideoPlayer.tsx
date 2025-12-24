@@ -20,6 +20,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
         const url = `/virtual-dash/${manifestName}?mediaId=${mediaId}`;
         const player = MediaPlayer().create();
 
+        // biome-ignore lint/suspicious/noExplicitAny: dash.js
         const requestInterceptor = (request: any) => {
             const uri = new URL(request.url, window.location.origin);
             uri.searchParams.set("mediaId", mediaId);
@@ -32,6 +33,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
 
         player.initialize(videoRef.current, url, false);
 
+        // biome-ignore lint/suspicious/noExplicitAny: dash.js
         player.on(MediaPlayer.events.ERROR, (e: any) => {
             console.error("Dash.js Error:", e.error?.message || e);
         });
