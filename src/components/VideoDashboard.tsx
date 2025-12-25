@@ -131,27 +131,29 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
 
                             <div className="pt-12">
                                 <AnimatePresence mode="popLayout">
-                                    {Object.entries(groupedVideos).map(([letter, vids]) => (
-                                        <motion.div layout key={letter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-                                            <h3 className="text-xl font-bold mt-8 mb-4 border-b border-gray-200 pb-2">{letter}</h3>
-                                            <div className="space-y-3 flex flex-col">
-                                                {vids.map((video) => (
-                                                    <motion.a
-                                                        href={`/player/${video._id}`}
-                                                        layout
-                                                        key={video._id.toString()}
-                                                        initial={{ opacity: 0, x: -10 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        exit={{ opacity: 0, x: 10 }}
-                                                        className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
-                                                    >
-                                                        <TbVideo />
-                                                        {video.name}
-                                                    </motion.a>
-                                                ))}
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                    {Object.entries(groupedVideos)
+                                        .sort(([a], [b]) => a.localeCompare(b))
+                                        .map(([letter, vids]) => (
+                                            <motion.div layout key={letter} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                                                <h3 className="text-xl font-bold mt-8 mb-4 border-b border-gray-200 pb-2">{letter}</h3>
+                                                <div className="space-y-3 flex flex-col">
+                                                    {vids.map((video) => (
+                                                        <motion.a
+                                                            href={`/player/${video._id}`}
+                                                            layout
+                                                            key={video._id.toString()}
+                                                            initial={{ opacity: 0, x: -10 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            exit={{ opacity: 0, x: 10 }}
+                                                            className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
+                                                        >
+                                                            <TbVideo />
+                                                            {video.name}
+                                                        </motion.a>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        ))}
                                     {filteredVideos.length === 0 && (
                                         <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4 items-center text-gray-500 py-12 min-h-128">
                                             <TbMoodPuzzled size={32} />
