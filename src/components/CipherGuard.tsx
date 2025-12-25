@@ -51,8 +51,9 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
         }
     };
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: ignore here
     useEffect(() => {
-        init(encryptedKeys ? true : false);
+        init(!!encryptedKeys);
     }, [encryptedKeys]);
 
     const saveKeyToLocalStorage = async (key: CryptoKey) => {
