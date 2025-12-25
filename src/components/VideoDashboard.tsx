@@ -76,7 +76,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                     <div className="flex items-center">
                         <span className="text-2xl font-bold">{showUploader ? "Upload Media" : "Files"}</span>
                     </div>
-                    <button type="button" onClick={() => setShowUploader(!showUploader)} className="flex items-center gap-2 rounded-full px-5 py-2 bg-neutral-900 text-white hover:bg-neutral-800 cursor-pointer transition-colors shadow-sm">
+                    <button type="button" onClick={() => setShowUploader(!showUploader)} className="flex items-center gap-2 rounded-full px-5 py-2 bg-neutral-900 text-white hover:bg-neutral-800 cursor-pointer transition-colors">
                         {showUploader ? (
                             <>
                                 <TbArrowLeft /> Back to Videos
