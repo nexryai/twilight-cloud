@@ -6,11 +6,10 @@ import CipherGuard from "@/components/CipherGuard";
 import VideoDashboard from "@/components/VideoDashboard";
 
 export default async function Home() {
-    const [session, initialKeys] = await Promise.all([getSession(), getKeys()]);
+    const [session, encryptedKeys] = await Promise.all([getSession(), getKeys()]);
 
     return (
         <div className="mb-32">
-            <div className="fixed top-0 left-0 z-50 w-screen h-12"></div>
             <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
                 <div className="flex items-center ml-16">
                     <div className="flex flex-col gap-4">
@@ -23,7 +22,11 @@ export default async function Home() {
                 </div>
                 <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
             </div>
-            <CipherGuard initialKeys={initialKeys} Component={VideoDashboard} componentProps={{}} />
+            <div id="home-content">
+                <CipherGuard encryptedKeys={encryptedKeys} Component={VideoDashboard} componentProps={{}} >
+                    <div className="bg-gray-200 aspect-video animate-pulse" />
+                </CipherGuard>
+            </div>
         </div>
     );
 }

@@ -24,6 +24,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+            <head>
+                <meta
+                    name="format-detection"
+                    content="telephone=no, date=no, email=no, address=no"
+                />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <div className="flex h-full flex-col bg-white font-sans text-neutral-900">
                     <div className="flex-1 min-h-screen">{children}</div>

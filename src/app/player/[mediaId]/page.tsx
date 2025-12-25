@@ -9,7 +9,7 @@ import PlayerView from "@/components/PlayerView";
 
 export default async function PlayerPage({ params }: { params: { mediaId: string } }) {
     const { mediaId } = await params;
-    const [initialKeys, video] = await Promise.all([getKeys(), getVideo(mediaId)]);
+    const [encryptedKeys, video] = await Promise.all([getKeys(), getVideo(mediaId)]);
 
     if (!video) {
         notFound();
@@ -19,14 +19,15 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
         <div className="flex flex-col gap-6 my-2 px-4 h-full mb-32">
             <div className="flex-1 mx-auto w-full">
                 <CipherGuard
-                    initialKeys={initialKeys}
+                    encryptedKeys={encryptedKeys}
                     Component={PlayerView}
                     componentProps={{
                         mediaId,
                         manifestName: video.manifest.split("/").pop() || "",
                     }}
-                    SkeletonComponent={<div className="bg-gray-200 aspect-video animate-pulse" />}
-                />
+                >
+                    <div className="bg-gray-200 aspect-video animate-pulse" />
+                </CipherGuard>
             </div>
             <div className="flex justify-between items-stretch">
                 <div className="flex flex-col gap-2 rounded-lg px-4 py-2 bg-gray-100 min-w-1/3 max-w-1/2">

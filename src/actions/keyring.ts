@@ -31,7 +31,7 @@ export interface KeyRing {
 type PasswordEncryptedKeyString = Omit<PasswordEncryptedKey, "salt" | "iv" | "ciphertext"> & { salt: string; iv: string; ciphertext: string };
 type WebAuthnEncryptedKeyString = Omit<WebAuthnEncryptedKey, "credentialId" | "iv" | "ciphertext"> & { credentialId: string; iv: string; ciphertext: string };
 
-export interface Keys {
+export interface EncryptedKeys {
     userId: string;
     passwordEncryptedKey: PasswordEncryptedKeyString;
     webauthnEncryptedKey: WebAuthnEncryptedKeyString;

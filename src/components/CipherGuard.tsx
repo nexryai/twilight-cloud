@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { TbCpu, TbKey } from "react-icons/tb";
 
-import { type Keys, savePasswordEncryptedKey } from "@/actions/keyring";
+import { type EncryptedKeys, savePasswordEncryptedKey } from "@/actions/keyring";
 import { arrayBufferToBase64, base64ToArrayBuffer, deriveKekFromPassword } from "@/cipher/helper";
 
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
@@ -16,43 +16,44 @@ const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
-interface CryptoGuardProps<T extends object> {
-    initialKeys: Keys | null;
+interface CipherGuardProps<T extends object> {
+    encryptedKeys: EncryptedKeys | null;
     Component: React.ComponentType<{ contentKey: CryptoKey } & T>;
     componentProps: T;
-    SkeletonComponent?: React.ReactNode;
+    children: React.ReactNode
 }
 
-const CipherGuard = <T extends object>({ initialKeys, Component, componentProps, SkeletonComponent }: CryptoGuardProps<T>) => {
+const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProps, children }: CipherGuardProps<T>) => {
     const [status, setStatus] = useState<"loading" | "needs_generation" | "needs_decryption" | "ready" | "error">("loading");
     const [error, setError] = useState<string | null>(null);
     const [useHardware, setUseHardware] = useState(false);
     const [password, setPassword] = useState("");
     const [contentKey, setContentKey] = useState<CryptoKey | null>(null);
 
-    useEffect(() => {
-        const init = async () => {
-            const savedKey = localStorage.getItem(KEY_STORAGE_ID);
-            if (savedKey) {
-                try {
-                    const jwk = JSON.parse(savedKey);
-                    const key = await crypto.subtle.importKey("jwk", jwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
-                    setContentKey(key);
-                    setStatus("ready");
-                    return;
-                } catch (e) {
-                    localStorage.removeItem(KEY_STORAGE_ID);
-                }
+    const init = async (hasEcnryptedKeys: boolean) => {
+        const savedKey = localStorage.getItem(KEY_STORAGE_ID);
+        if (savedKey) {
+            try {
+                const jwk = JSON.parse(savedKey);
+                const key = await crypto.subtle.importKey("jwk", jwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+                setContentKey(key);
+                setStatus("ready");
+                return;
+            } catch (e) {
+                localStorage.removeItem(KEY_STORAGE_ID);
             }
+        }
 
-            if (!initialKeys) {
-                setStatus("needs_generation");
-            } else {
-                setStatus("needs_decryption");
-            }
-        };
-        init();
-    }, [initialKeys]);
+        if (!hasEcnryptedKeys) {
+            setStatus("needs_generation");
+        } else {
+            setStatus("needs_decryption");
+        }
+    };
+
+    useEffect(() => {
+        init(encryptedKeys ? true : false);
+    }, [encryptedKeys]);
 
     const saveKeyToLocalStorage = async (key: CryptoKey) => {
         const jwk = await crypto.subtle.exportKey("jwk", key);
@@ -100,12 +101,12 @@ const CipherGuard = <T extends object>({ initialKeys, Component, componentProps,
     };
 
     const handlePasswordDecrypt = async () => {
-        if (!initialKeys?.passwordEncryptedKey) return;
+        if (!encryptedKeys?.passwordEncryptedKey) return;
         setStatus("loading");
         setError(null);
 
         try {
-            const { salt, iv, ciphertext } = initialKeys.passwordEncryptedKey;
+            const { salt, iv, ciphertext } = encryptedKeys.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
 
             const decryptedKeyRaw = await crypto.subtle.decrypt(
@@ -187,10 +188,11 @@ const CipherGuard = <T extends object>({ initialKeys, Component, componentProps,
     };
 
     return (
-        <>
+        <div id="cipher-guard">
+            <div id="cipher-skeleton" className={status === "loading" ? "loading" : "hidden"}>{children}</div>
             {status !== "loading" && status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
-            {status === "ready" && contentKey ? <Component contentKey={contentKey} {...componentProps} /> : SkeletonComponent ? SkeletonComponent : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}
-        </>
+            {status === "ready" && contentKey && <div id="cipher-content"><Component contentKey={contentKey} {...componentProps} /></div>}
+        </div>
     );
 };
 
