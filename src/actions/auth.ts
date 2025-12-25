@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
+export async function getSession() {
+    return await auth.api.getSession({
+        headers: await headers(),
+    });
+}
+
 export async function signIn(_prevState: string | undefined, formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
