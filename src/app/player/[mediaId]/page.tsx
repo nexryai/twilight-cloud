@@ -79,7 +79,7 @@ export default function PlayerPage() {
     const isLoading = !video || !isSwReady;
 
     return (
-        <div className="flex flex-col gap-6 my-2 px-4 h-full">
+        <div className="flex flex-col gap-6 my-2 px-4 h-full mb-32">
             <div className="flex-1 mx-auto w-full">
                 <div className="bg-white rounded-lg overflow-hidden">{isLoading ? <div className="bg-gray-200 aspect-video animate-pulse" /> : <VideoPlayer mediaId={mediaId as string} manifestName={video.manifest.split("/").pop() || ""} />}</div>
             </div>

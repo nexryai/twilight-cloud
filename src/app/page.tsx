@@ -194,25 +194,19 @@ export default function Home() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col bg-white font-sans text-neutral-900">
+        <>
             {status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
-            <div className="flex-1">
-                <div className="fixed top-0 left-0 z-50 w-screen h-12">{/* ナビゲーションバー */}</div>
-                <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
-                    <div className="flex items-center ml-16">
-                        <div className="flex flex-col gap-4">
-                            <h1 className="text-2xl font-bold">My Videos</h1>
-                            <p>Manage your library</p>
-                        </div>
+            <div className="fixed top-0 left-0 z-50 w-screen h-12">{/* ナビゲーションバー */}</div>
+            <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
+                <div className="flex items-center ml-16">
+                    <div className="flex flex-col gap-4">
+                        <h1 className="text-2xl font-bold">My Videos</h1>
+                        <p>Manage your library</p>
                     </div>
-                    <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
                 </div>
-                <main className="pb-20">{status === "ready" && contentKey ? <VideoDashboard contentKey={contentKey} /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
+                <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
             </div>
-            <footer className="border-t border-gray-200 py-12 px-16 flex justify-between items-center text-sm text-gray-500">
-                <p>&copy; {new Date().getFullYear()} nexryai All rights reserved.</p>
-                <p className="font-medium text-gray-400">Project of Ablaze</p>
-            </footer>
-        </div>
+            <main className="pb-20">{status === "ready" && contentKey ? <VideoDashboard contentKey={contentKey} /> : <div className="p-20 text-center text-gray-400">Waiting for decryption...</div>}</main>
+        </>
     );
 }
