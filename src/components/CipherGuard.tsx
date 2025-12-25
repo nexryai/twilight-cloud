@@ -165,10 +165,18 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                     {!useHardware ? (
                         <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePasswordDecrypt()} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
                     ) : (
-                        <div className="flex flex-col items-center p-8 border-2 border-dashed rounded-lg mb-4">
-                            <button type="button" onClick={() => alert("WebAuthn PRF required")} className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full hover:bg-gray-100">
-                                <TbCpu size={24} /> <span>Use Hardware Key</span> <TbKey size={24} />
-                            </button>
+                        <div className="flex flex-col justify-center items-center p-4">
+                            <div className="flex gap-4">
+                                <TbCpu size={32} />
+                                <div className="flex space-x-2 justify-center items-center">
+                                    <span className="sr-only">Loading...</span>
+                                    <div className="h-1.5 w-1.5  bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="h-1.5 w-1.5 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="h-1.5 w-1.5 bg-black rounded-full animate-bounce"></div>
+                                </div>
+                                <TbKey size={32} />
+                            </div>
+                            <p className="mt-3 mb-4">Waiting for WebAuthn...</p>
                         </div>
                     )}
                     {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
