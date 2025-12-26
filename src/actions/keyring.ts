@@ -57,7 +57,7 @@ const getKeyRing = async () => {
     return { keyRing, userId: user.id };
 };
 
-export async function getKeys() {
+export async function getKeys(): Promise<EncryptedKeys | null> {
     const { keyRing } = await getKeyRing();
     if (!keyRing) {
         return null;
@@ -71,10 +71,10 @@ export async function getKeys() {
             }
             return value;
         }),
-    );
+    ) satisfies EncryptedKeys;
 }
 
-export async function savePasswordEncryptedKey(keyData: PasswordEncryptedKeyString) {
+export async function savePasswordEncryptedKey(keyData: PasswordEncryptedKeyString): Promise<void> {
     const user = await getUserOrFail();
     const { salt, iv, ciphertext } = keyData;
 
@@ -87,7 +87,7 @@ export async function savePasswordEncryptedKey(keyData: PasswordEncryptedKeyStri
     await db.collection<KeyRing>("keyrings").updateOne({ userId: user.id }, { $set: { passwordEncryptedKey } }, { upsert: true });
 }
 
-export async function saveWebAuthnEncryptedKey(keyData: WebAuthnEncryptedKeyString) {
+export async function saveWebAuthnEncryptedKey(keyData: WebAuthnEncryptedKeyString): Promise<void> {
     const user = await getUserOrFail();
     const { credentialId, iv, ciphertext } = keyData;
 
