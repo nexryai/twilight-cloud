@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const objectKey = `${mediaId}/${filename}`;
         const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
 
-        url.searchParams.set("X-Amz-Expires", "3600");
+        url.searchParams.set("X-Amz-Expires", "60");
 
         const signedRequest = await aws.sign(url.toString(), {
             method: "GET",
