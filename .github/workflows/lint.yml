@@ -34,5 +34,5 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Execute vitest
+            - name: Execute biome
               run: pnpm lint
