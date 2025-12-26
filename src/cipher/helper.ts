@@ -25,10 +25,10 @@ export async function deriveKekFromPassword(password: string, salt: BufferSource
             name: "PBKDF2",
             salt: salt,
             iterations: 100000,
-            hash: "SHA-256",
+            hash: "SHA-512",
         },
         passwordKey,
-        { name: "AES-CTR", length: 256 },
+        { name: "AES-GCM", length: 256 },
         false,
         ["encrypt", "decrypt"],
     );

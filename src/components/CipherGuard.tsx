@@ -12,7 +12,7 @@ const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
-        <div className="p-6 max-w-3xl w-full bg-white/50 rounded-lg">{children}</div>
+        <div className="p-6 max-w-3xl w-full border border-gray-200 bg-white rounded-lg">{children}</div>
     </div>
 );
 
@@ -70,17 +70,18 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
         setError(null);
 
         try {
+            // Using AES-CTR for CEK
             const newContentKey = await crypto.subtle.generateKey({ name: "AES-CTR", length: 256 }, true, ["encrypt", "decrypt"]);
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const kek = await deriveKekFromPassword(password, salt);
-            const counter = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(16));
             const rawContentKey = await crypto.subtle.exportKey("raw", newContentKey);
 
             const ciphertext = await crypto.subtle.encrypt(
                 {
-                    name: "AES-CTR",
-                    counter: counter,
-                    length: 64,
+                    // Using AES-GCM for KEK
+                    name: "AES-GCM",
+                    iv: iv,
                 },
                 kek,
                 rawContentKey,
@@ -88,7 +89,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
 
             await savePasswordEncryptedKey({
                 salt: arrayBufferToBase64(salt.buffer),
-                iv: arrayBufferToBase64(counter.buffer),
+                iv: arrayBufferToBase64(iv.buffer),
                 ciphertext: arrayBufferToBase64(ciphertext),
             });
 
@@ -96,6 +97,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
             setContentKey(newContentKey);
             setStatus("ready");
         } catch (e) {
+            console.error(e);
             setError("Key generation failed.");
             setStatus("error");
         }
@@ -110,22 +112,22 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
             const { salt, iv, ciphertext } = encryptedKeys.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
 
-            const decryptedKeyRaw = await crypto.subtle.decrypt(
+            const decryptedCEK = await crypto.subtle.decrypt(
                 {
-                    name: "AES-CTR",
-                    counter: new Uint8Array(base64ToArrayBuffer(iv)),
-                    length: 64,
+                    name: "AES-GCM",
+                    iv: new Uint8Array(base64ToArrayBuffer(iv)),
                 },
                 kek,
                 base64ToArrayBuffer(ciphertext),
             );
 
-            const importedKey = await crypto.subtle.importKey("raw", decryptedKeyRaw, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+            const importedCEK = await crypto.subtle.importKey("raw", decryptedCEK, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
 
-            await saveKeyToLocalStorage(importedKey);
-            setContentKey(importedKey);
+            await saveKeyToLocalStorage(importedCEK);
+            setContentKey(importedCEK);
             setStatus("ready");
         } catch (e) {
+            console.error(e);
             setError("Incorrect password.");
             setStatus("needs_decryption");
         }
@@ -138,7 +140,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
                     <p className="mb-4">{error}</p>
-                    <button type="button" onClick={() => window.location.reload()} className="text-blue-600 underline">
+                    <button type="button" onClick={() => window.location.reload()} className="underline">
                         Retry
                     </button>
                 </div>
@@ -149,10 +151,10 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                 <div>
                     <h2 className="text-2xl font-bold mb-2">Setup Encryption</h2>
                     <p className="mb-6 text-gray-600 text-sm">Set a password to protect your media keys. This cannot be recovered.</p>
-                    <input type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="password" placeholder="Min. 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-1" />
                     {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
                     <div className="flex justify-end">
-                        <button type="button" onClick={handleGenerateKey} disabled={password.length < 8} className="bg-blue-600 text-white px-6 py-2 rounded-md disabled:opacity-50">
+                        <button type="button" onClick={handleGenerateKey} disabled={password.length < 8} className="bg-black text-white px-6 py-2 rounded-md disabled:opacity-50">
                             Create Key
                         </button>
                     </div>
