@@ -17,6 +17,7 @@
         "aws4fetch": "^1.0.20",
         "better-auth": "^1.4.7",
         "dashjs": "^5.1.0",
+        "hash-wasm": "^4.12.0",
         "ikaria.js": "0.2.1",
         "mongodb": "^7.0.0",
         "motion": "^12.23.26",

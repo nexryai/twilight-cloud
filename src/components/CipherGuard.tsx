@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { TbCpu, TbKey } from "react-icons/tb";
 
 import { type EncryptedKeys, savePasswordEncryptedKey } from "@/actions/keyring";
-import { arrayBufferToBase64, base64ToArrayBuffer, deriveKekFromPassword } from "@/cipher/helper";
+import { deriveKekFromPassword } from "@/cipher/derive";
+import { arrayBufferToBase64, base64ToArrayBuffer } from "@/cipher/helper";
 
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
@@ -20,7 +21,7 @@ interface CipherGuardProps<T extends object> {
     encryptedKeys: EncryptedKeys | null;
     Component: React.ComponentType<{ contentKey: CryptoKey } & T>;
     componentProps: T;
-    children: React.ReactNode
+    children: React.ReactNode;
 }
 
 const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProps, children }: CipherGuardProps<T>) => {
@@ -166,7 +167,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                 <div>
                     <h2 className="text-2xl font-bold mb-4">Decrypt Access</h2>
                     {!useHardware ? (
-                        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePasswordDecrypt()} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handlePasswordDecrypt()} className="w-full p-3 border rounded-md mb-4 outline-none focus:ring-1" />
                     ) : (
                         <div className="flex flex-col justify-center items-center p-4">
                             <div className="flex gap-4">
@@ -188,7 +189,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                             {useHardware ? "Use Password" : "Use Passkey (WebAuthn)"}
                         </button>
                         {!useHardware && (
-                            <button type="button" onClick={handlePasswordDecrypt} className="bg-blue-600 text-white px-6 py-2 rounded-md">
+                            <button type="button" onClick={handlePasswordDecrypt} className="bg-black text-white px-6 py-2 rounded-md">
                                 Decrypt
                             </button>
                         )}
@@ -200,9 +201,15 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
 
     return (
         <div id="cipher-guard">
-            <div id="cipher-skeleton" className={status === "loading" ? "loading" : "hidden"}>{children}</div>
+            <div id="cipher-skeleton" className={status === "loading" ? "loading" : "hidden"}>
+                {children}
+            </div>
             {status !== "loading" && status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
-            {status === "ready" && contentKey && <div id="cipher-content"><Component contentKey={contentKey} {...componentProps} /></div>}
+            {status === "ready" && contentKey && (
+                <div id="cipher-content">
+                    <Component contentKey={contentKey} {...componentProps} />
+                </div>
+            )}
         </div>
     );
 };
