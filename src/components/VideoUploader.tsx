@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { remuxToDash } from "ikaria.js";
 
-import { getPresignedUrls } from "@/actions/upload";
+import { createMedia, getChunkUploadUrl } from "@/actions/upload";
 import { generateCounterBlock } from "@/cipher/key";
 import { createCryptoTransformStream } from "@/cipher/stream";
 
@@ -29,7 +29,7 @@ interface VideoUploaderProps {
 
 const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
     const [isProcessing, setIsProcessing] = useState(false);
-    const [statusMessage, setStatusMessage] = useState<string>("ファイルを選択してください");
+    const [statusMessage, setStatusMessage] = useState<string>("Please select a file");
     const [uploadProgress, setUploadProgress] = useState<number>(0);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,29 +43,36 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
         const selectedFile = files[0];
         setIsProcessing(true);
         await clearOpfs();
-        setStatusMessage("OPFSへ書き込み中...");
+        setStatusMessage("Writing to OPFS...");
         setUploadProgress(0);
 
         try {
             const opfsRoot = await navigator.storage.getDirectory();
 
+            // Write source file to OPFS
             const fileHandle = await opfsRoot.getFileHandle(selectedFile.name, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(selectedFile);
             await writable.close();
 
-            setStatusMessage("DASHへ変換中...");
+            setStatusMessage("Converting to DASH...");
             await runConversion(selectedFile.name);
+
             const outDir = await opfsRoot.getDirectoryHandle("out");
             const fileList: string[] = [];
-            // @ts-expect-error - FileSystemDirectoryHandle iteration
+            // @ts-expect-error
             for await (const name of outDir.keys()) {
                 fileList.push(name);
             }
 
-            const { urls, manifestPath } = await getPresignedUrls(fileList, selectedFile.type, selectedFile.name);
+            const manifestFilename = fileList.find((name) => name.endsWith(".mpd"));
+            if (!manifestFilename) throw new Error("Manifest (.mpd) not found");
 
-            // --- 3. 総ファイルサイズ計算 (データ本体 + カウンター16バイト) ---
+            // 1. Register media and get manifest upload URL
+            setStatusMessage("Registering media...");
+            const { mediaId, url: manifestUploadUrl } = await createMedia(manifestFilename, selectedFile.type, selectedFile.name);
+
+            // 2. Calculate total size for progress tracking
             const sizes = await Promise.all(
                 fileList.map(async (name) => {
                     const fileHandle = await outDir.getFileHandle(name);
@@ -76,59 +83,51 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
             const totalSize = sizes.reduce((acc, size) => acc + size, 0);
             let totalUploadedSize = 0;
 
-            for (const { url, filename } of urls) {
-                const uploadWithRetry = async (retryCount: number): Promise<void> => {
-                    const fileHandle = await outDir.getFileHandle(filename);
-                    const file = await fileHandle.getFile();
+            const encryptAndUpload = async (filename: string, uploadUrl: string) => {
+                const fileHandle = await outDir.getFileHandle(filename);
+                const file = await fileHandle.getFile();
+                const counterBlock = generateCounterBlock();
 
-                    const counterBlock = generateCounterBlock();
+                setStatusMessage(`Encrypting: ${filename}`);
+                const encryptTransform = await createCryptoTransformStream(contentKey, counterBlock);
+                const encryptedChunks: Uint8Array[] = [counterBlock];
 
-                    setStatusMessage(`暗号化準備中: ${filename}`);
+                const reader = file.stream().pipeThrough(encryptTransform).getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    encryptedChunks.push(value);
+                }
 
-                    // 暗号化ストリームの作成
-                    const encryptTransform = await createCryptoTransformStream(contentKey, counterBlock);
+                const uploadBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
 
-                    const encryptedChunks: Uint8Array[] = [counterBlock];
+                setStatusMessage(`Uploading: ${filename}`);
+                const response = await fetch(uploadUrl, {
+                    method: "PUT",
+                    body: uploadBlob,
+                    headers: { "Content-Type": "application/octet-stream" },
+                });
 
-                    const reader = file.stream().pipeThrough(encryptTransform).getReader();
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        encryptedChunks.push(value);
-                    }
+                if (!response.ok) throw new Error(`Upload failed for ${filename}: ${response.status}`);
 
-                    const uploadBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
+                totalUploadedSize += file.size + 16;
+                setUploadProgress((totalUploadedSize / totalSize) * 100);
+            };
 
-                    try {
-                        setStatusMessage(`アップロード中: ${filename}`);
+            // 3. Upload Manifest
+            await encryptAndUpload(manifestFilename, manifestUploadUrl);
 
-                        const response = await fetch(url, {
-                            method: "PUT",
-                            body: uploadBlob,
-                            headers: {
-                                "Content-Type": "application/octet-stream",
-                            },
-                        });
-
-                        if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
-
-                        totalUploadedSize += file.size + 16;
-                        setUploadProgress((totalUploadedSize / totalSize) * 100);
-                    } catch (e) {
-                        if (retryCount > 0) {
-                            console.warn(`Retry ${filename}: ${retryCount} attempts left`);
-                            return await uploadWithRetry(retryCount - 1);
-                        }
-                        throw e;
-                    }
-                };
-
-                await uploadWithRetry(3);
+            // 4. Upload Chunks
+            const chunks = fileList.filter((name) => name !== manifestFilename);
+            for (const filename of chunks) {
+                const { url: chunkUrl } = await getChunkUploadUrl(mediaId, filename);
+                await encryptAndUpload(filename, chunkUrl);
             }
-            setStatusMessage(`アップロード完了！ Manifest: ${manifestPath}`);
+
+            setStatusMessage(`Upload complete! Media ID: ${mediaId}`);
         } catch (error) {
             console.error("Processing Error:", error);
-            setStatusMessage(`エラー: ${error instanceof Error ? error.message : error}`);
+            setStatusMessage(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
         } finally {
             setIsProcessing(false);
             if (event.target) event.target.value = "";

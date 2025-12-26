@@ -18,59 +18,54 @@ const aws = new AwsClient({
 const S3_ENDPOINT = process.env.AWS_S3_ENDPOINT!;
 const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
-export async function getPresignedUrls(files: string[], type: string, title: string) {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+const generateSignedUrl = async (objectKey: string, expires: number = 300): Promise<string> => {
+    const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
+    url.searchParams.set("X-Amz-Expires", expires.toString());
 
-    if (!session) {
-        throw new Error("invalid session or not authenticated");
-    }
+    const signedRequest = await aws.sign(url.toString(), {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+        aws: { signQuery: true, service: "s3" },
+    });
+    return signedRequest.url;
+};
+
+export async function createMedia(manifestName: string, type: string, title: string): Promise<{ mediaId: string; url: string }> {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) throw new Error("Unauthorized");
 
     const mediaId = new ObjectId();
-    const manifest = files.find((file) => file.endsWith(".mpd"));
-
-    if (!manifest) {
-        throw new Error("Manifest file not found");
-    }
-
-    const urls = await Promise.all(
-        files.map(async (file) => {
-            const objectKey = `${mediaId.toHexString()}/${file}`;
-            const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
-
-            url.searchParams.set("X-Amz-Expires", "3600");
-
-            const signedRequest = await aws.sign(url.toString(), {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/octet-stream",
-                },
-                aws: {
-                    signQuery: true,
-                    service: "s3",
-                },
-            });
-
-            return {
-                url: signedRequest.url,
-                filename: file,
-            };
-        }),
-    );
+    const objectKey = `${mediaId.toHexString()}/${manifestName}`;
 
     const media = client.db().collection("media");
     await media.insertOne({
         _id: mediaId,
         name: title,
-        manifest: `${mediaId.toHexString()}/${manifest}`,
+        manifest: objectKey,
         contentType: type,
         createdAt: new Date(),
         userId: session.user.id,
     });
 
+    const url = await generateSignedUrl(objectKey, 30);
+
     return {
-        urls,
-        manifestPath: `${mediaId.toHexString()}/${manifest}`,
+        mediaId: mediaId.toHexString(),
+        url,
     };
+}
+
+export async function getChunkUploadUrl(mediaId: string, filename: string): Promise<{ url: string }> {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) throw new Error("Unauthorized");
+
+    if (filename.includes("/") || filename.includes("..")) {
+        throw new Error("Invalid filename");
+    }
+
+    const objectKey = `${mediaId}/${filename}`;
+
+    const url = await generateSignedUrl(objectKey, 300);
+
+    return { url };
 }
