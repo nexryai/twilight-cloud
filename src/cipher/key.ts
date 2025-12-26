@@ -9,7 +9,7 @@ export async function generateCryptoKey(): Promise<CryptoKey> {
     );
 }
 
-export function generateRandomIV(): Uint8Array {
+export function generateCounterBlock(): Uint8Array {
     const iv = new Uint8Array(16);
     // 前半8バイトをランダムなNonceにする
     // 後半8バイトはCounter (初期値0) として残す

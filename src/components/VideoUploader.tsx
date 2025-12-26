@@ -6,7 +6,7 @@ import { useState } from "react";
 import { remuxToDash } from "ikaria.js";
 
 import { getPresignedUrls } from "@/actions/upload";
-import { generateRandomIV } from "@/cipher/key";
+import { generateCounterBlock } from "@/cipher/key";
 import { createCryptoTransformStream } from "@/cipher/stream";
 
 const requestPersistentStorage = async (): Promise<boolean> => {
@@ -81,7 +81,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
                     const fileHandle = await outDir.getFileHandle(filename);
                     const file = await fileHandle.getFile();
 
-                    const counterBlock = generateRandomIV();
+                    const counterBlock = generateCounterBlock();
 
                     setStatusMessage(`暗号化準備中: ${filename}`);
 

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { generateCryptoKey, generateRandomIV } from "@/cipher/key";
+import { generateCounterBlock, generateCryptoKey } from "@/cipher/key";
 import { createCryptoTransformStream, createDecryptStream } from "@/cipher/stream";
 
 const testKey = await generateCryptoKey();
-const testIV = await generateRandomIV();
+const testIV = await generateCounterBlock();
 
 // 全データを結合してUint8Arrayにする
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
