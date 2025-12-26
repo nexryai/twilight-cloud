@@ -26,7 +26,7 @@ jobs:
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v4
               with:
-                  node-version: ${{ matrix.node-version }}
+                node-version: ${{ matrix.node-version }}
 
             - name: Install pnpm
               run: corepack disable && npm install -g pnpm
@@ -35,4 +35,7 @@ jobs:
               run: pnpm install
 
             - name: Building
-              run: pnpm build
+              run: |
+                export BETTER_AUTH_URL=https://example.org
+                export BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+                pnpm build
