@@ -41,6 +41,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                 setStatus("ready");
                 return;
             } catch (e) {
+                console.error(e);
                 localStorage.removeItem(KEY_STORAGE_ID);
             }
         }

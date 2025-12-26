@@ -37,7 +37,7 @@ export async function signUp(_prevState: string | undefined, formData: FormData)
     const name = formData.get("name") as string;
 
     if (!process.env.ALLOWED_USERS?.split(",").includes(email)) {
-        return "This email is not allowed to register." ;
+        return "This email is not allowed to register.";
     }
 
     try {

@@ -65,7 +65,7 @@ export async function getKeys() {
 
     // Convert Binary to base64 for serialization
     return JSON.parse(
-        JSON.stringify(keyRing, (key, value) => {
+        JSON.stringify(keyRing, (_key, value) => {
             if (value?.constructor && value.constructor.name === "Binary") {
                 return (value as Binary).toString("base64");
             }
