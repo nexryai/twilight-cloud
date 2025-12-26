@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 
+import { IconArrowLeft, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
-import { TbArrowLeft, TbMoodPuzzled, TbPlus, TbUpload, TbVideo } from "react-icons/tb";
 
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
 
@@ -79,11 +79,11 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                     <button type="button" onClick={() => setShowUploader(!showUploader)} className="flex items-center gap-2 rounded-full px-5 py-2 bg-neutral-900 text-white hover:bg-neutral-800 cursor-pointer transition-colors">
                         {showUploader ? (
                             <>
-                                <TbArrowLeft /> Back to Videos
+                                <IconArrowLeft size={18} /> Back to Videos
                             </>
                         ) : (
                             <>
-                                <TbUpload /> Upload
+                                <IconUpload size={18} /> Upload
                             </>
                         )}
                     </button>
@@ -125,7 +125,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                 ))}
 
                                 <motion.div layout whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleCreatePlaylist} className="flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-md p-4 cursor-pointer hover:bg-gray-200 transition-colors">
-                                    <TbPlus size={32} className="text-gray-500" />
+                                    <IconPlus size={32} className="text-gray-500" />
                                 </motion.div>
                             </div>
 
@@ -147,7 +147,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                                             exit={{ opacity: 0, x: 10 }}
                                                             className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
                                                         >
-                                                            <TbVideo />
+                                                            <IconVideo size={18} />
                                                             {video.name}
                                                         </motion.a>
                                                     ))}
@@ -156,7 +156,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                         ))}
                                     {filteredVideos.length === 0 && (
                                         <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4 items-center text-gray-500 py-12 min-h-128">
-                                            <TbMoodPuzzled size={32} />
+                                            <IconMoodPuzzled size={32} />
                                             No videos found.
                                         </motion.div>
                                     )}
