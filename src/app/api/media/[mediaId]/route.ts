@@ -18,7 +18,7 @@ const aws = new AwsClient({
 const S3_ENDPOINT = process.env.AWS_S3_ENDPOINT!;
 const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
-export async function GET(request: NextRequest, { params }: { params: { mediaId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ mediaId: string }> }) {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -35,7 +35,6 @@ export async function GET(request: NextRequest, { params }: { params: { mediaId:
     }
 
     try {
-        console.log(mediaId)
         const video = await db.collection<Video>("videos").findOne({
             _id: new ObjectId(mediaId),
             userId: session.user.id,
