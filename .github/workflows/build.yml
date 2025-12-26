@@ -38,4 +38,9 @@ jobs:
               run: |
                 export BETTER_AUTH_URL=https://example.org
                 export BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+                export AWS_S3_ENDPOINT=https://example.org/
+                export AWS_S3_REGION=apac
+                export AWS_ACCESS_KEY_ID=dummy
+                export AWS_SECRET_ACCESS_KEY=not-secret
+                export AWS_S3_BUCKET=dummy
                 pnpm build
