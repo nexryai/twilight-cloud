@@ -5,20 +5,8 @@ import { headers } from "next/headers";
 import { ObjectId } from "mongodb";
 
 import { auth } from "@/auth";
-import { aws, BUCKET_NAME, S3_ENDPOINT } from "@/aws";
 import { client } from "@/db";
-
-const generateSignedUrl = async (objectKey: string, expires: number = 300): Promise<string> => {
-    const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
-    url.searchParams.set("X-Amz-Expires", expires.toString());
-
-    const signedRequest = await aws.sign(url.toString(), {
-        method: "PUT",
-        headers: { "Content-Type": "application/octet-stream" },
-        aws: { signQuery: true, service: "s3" },
-    });
-    return signedRequest.url;
-};
+import { generateSignedUrl } from "@/s3";
 
 export async function createMedia(manifestName: string, type: string, title: string): Promise<{ mediaId: string; url: string }> {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -37,7 +25,7 @@ export async function createMedia(manifestName: string, type: string, title: str
         userId: session.user.id,
     });
 
-    const url = await generateSignedUrl(objectKey, 30);
+    const url = await generateSignedUrl(objectKey, "PUT", 30);
 
     return {
         mediaId: mediaId.toHexString(),
@@ -55,7 +43,7 @@ export async function getChunkUploadUrl(mediaId: string, filename: string): Prom
 
     const objectKey = `${mediaId}/${filename}`;
 
-    const url = await generateSignedUrl(objectKey, 300);
+    const url = await generateSignedUrl(objectKey, "PUT", 300);
 
     return { url };
 }

@@ -5,8 +5,8 @@ import { ObjectId } from "mongodb";
 
 import type { Video } from "@/actions/media";
 import { auth } from "@/auth";
-import { aws, BUCKET_NAME, S3_ENDPOINT } from "@/aws";
 import { db } from "@/db";
+import { generateSignedUrl } from "@/s3";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ mediaId: string }> }) {
     const session = await auth.api.getSession({
@@ -34,20 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "Video not found or access denied" }, { status: 404 });
         }
 
-        const objectKey = `${mediaId}/${filename}`;
-        const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
-
-        url.searchParams.set("X-Amz-Expires", "60");
-
-        const signedRequest = await aws.sign(url.toString(), {
-            method: "GET",
-            aws: {
-                signQuery: true,
-                service: "s3",
-            },
-        });
-
-        return NextResponse.json({ url: signedRequest.url });
+        return NextResponse.json({ url: generateSignedUrl(`${mediaId}/${filename}`, "GET", 60) });
     } catch (error) {
         console.error("Error generating signed URL:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
