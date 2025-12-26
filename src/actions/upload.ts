@@ -1,22 +1,12 @@
-/** biome-ignore-all lint/style/noNonNullAssertion: Ignore */
 "use server";
 
 import { headers } from "next/headers";
 
-import { AwsClient } from "aws4fetch";
 import { ObjectId } from "mongodb";
 
 import { auth } from "@/auth";
+import { aws, BUCKET_NAME, S3_ENDPOINT } from "@/aws";
 import { client } from "@/db";
-
-const aws = new AwsClient({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    region: process.env.AWS_S3_REGION!,
-});
-
-const S3_ENDPOINT = process.env.AWS_S3_ENDPOINT!;
-const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
 const generateSignedUrl = async (objectKey: string, expires: number = 300): Promise<string> => {
     const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);

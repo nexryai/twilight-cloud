@@ -1,22 +1,12 @@
-/** biome-ignore-all lint/style/noNonNullAssertion: <¯\_(ツ)_/¯> */
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { AwsClient } from "aws4fetch";
 import { ObjectId } from "mongodb";
 
 import type { Video } from "@/actions/media";
 import { auth } from "@/auth";
+import { aws, BUCKET_NAME, S3_ENDPOINT } from "@/aws";
 import { db } from "@/db";
-
-const aws = new AwsClient({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    region: process.env.AWS_S3_REGION!,
-});
-
-const S3_ENDPOINT = process.env.AWS_S3_ENDPOINT!;
-const BUCKET_NAME = process.env.AWS_S3_BUCKET!;
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ mediaId: string }> }) {
     const session = await auth.api.getSession({
