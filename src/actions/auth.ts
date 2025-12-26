@@ -24,10 +24,8 @@ export async function signIn(_prevState: string | undefined, formData: FormData)
             headers: await headers(),
         });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            return error.message;
-        }
-        return "ログインに失敗しました";
+        console.error(error);
+        return "Failed to login.";
     }
 
     redirect("/");
@@ -37,6 +35,10 @@ export async function signUp(_prevState: string | undefined, formData: FormData)
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
+
+    if (!process.env.ALLOWED_USERS?.split(",").includes(email)) {
+        return "This email is not allowed to register." ;
+    }
 
     try {
         await auth.api.signUpEmail({
@@ -48,10 +50,8 @@ export async function signUp(_prevState: string | undefined, formData: FormData)
             headers: await headers(),
         });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            return error.message;
-        }
-        return "アカウント作成に失敗しました";
+        console.error(error);
+        return "Failed to register.";
     }
 
     redirect("/");
