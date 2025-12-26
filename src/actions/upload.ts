@@ -27,7 +27,7 @@ export async function getPresignedUrls(files: string[], type: string, title: str
         throw new Error("invalid session or not authenticated");
     }
 
-    const videoId = new ObjectId();
+    const mediaId = new ObjectId();
     const manifest = files.find((file) => file.endsWith(".mpd"));
 
     if (!manifest) {
@@ -36,7 +36,7 @@ export async function getPresignedUrls(files: string[], type: string, title: str
 
     const urls = await Promise.all(
         files.map(async (file) => {
-            const objectKey = `${videoId.toHexString()}/${file}`;
+            const objectKey = `${mediaId.toHexString()}/${file}`;
             const url = new URL(`${S3_ENDPOINT}/${BUCKET_NAME}/${objectKey}`);
 
             url.searchParams.set("X-Amz-Expires", "3600");
@@ -59,11 +59,11 @@ export async function getPresignedUrls(files: string[], type: string, title: str
         }),
     );
 
-    const videos = client.db().collection("videos");
-    await videos.insertOne({
-        _id: videoId,
+    const media = client.db().collection("media");
+    await media.insertOne({
+        _id: mediaId,
         name: title,
-        manifest: `${videoId.toHexString()}/${manifest}`,
+        manifest: `${mediaId.toHexString()}/${manifest}`,
         contentType: type,
         createdAt: new Date(),
         userId: session.user.id,
@@ -71,6 +71,6 @@ export async function getPresignedUrls(files: string[], type: string, title: str
 
     return {
         urls,
-        manifestPath: `${videoId.toHexString()}/${manifest}`,
+        manifestPath: `${mediaId.toHexString()}/${manifest}`,
     };
 }

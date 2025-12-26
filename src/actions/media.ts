@@ -40,7 +40,7 @@ const getUserOrFail = async () => {
 export async function getVideo(id: string): Promise<Video | null> {
     const user = await getUserOrFail();
 
-    const media = await db.collection<Video>("videos").findOne({
+    const media = await db.collection<Video>("media").findOne({
         _id: new ObjectId(id),
         userId: user.id,
     });
@@ -58,7 +58,7 @@ export async function getVideo(id: string): Promise<Video | null> {
 
 export async function getVideos(): Promise<Video[]> {
     const user = await getUserOrFail();
-    const videos = await db.collection<Video>("videos").find({ userId: user.id }).sort({ name: 1 }).toArray();
+    const videos = await db.collection<Video>("media").find({ userId: user.id }).sort({ name: 1 }).toArray();
 
     return JSON.parse(JSON.stringify(videos)) as Video[];
 }
