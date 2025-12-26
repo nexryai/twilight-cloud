@@ -1,0 +1,38 @@
+name: Build CI
+permissions: {}
+on:
+    pull_request:
+        types:
+            - opened
+            - synchronize
+    push:
+        branches:
+            - "**"
+
+jobs:
+    eslint:
+        name: 🔨 Test Building
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        strategy:
+            matrix:
+                node-version: [22.x, 24.x]
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Install pnpm
+              run: corepack disable && npm install -g pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Building
+              run: pnpm build
