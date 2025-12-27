@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     try {
-        const video = await db.collection<Video>("videos").findOne({
+        const video = await db.collection<Video>("media").findOne({
             _id: new ObjectId(mediaId),
             userId: session.user.id,
         });
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "Video not found or access denied" }, { status: 404 });
         }
 
-        return NextResponse.json({ url: generateSignedUrl(`${mediaId}/${filename}`, "GET", 60) });
+        return NextResponse.json({ url: await generateSignedUrl(`${mediaId}/${filename}`, "GET", 60) });
     } catch (error) {
         console.error("Error generating signed URL:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
