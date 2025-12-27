@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { generateCounterBlock, generateCryptoKey } from "@/cipher/key";
+import { generateCounterBlock } from "@/cipher/counter";
+import { generateCEK } from "@/cipher/key";
 import { createCryptoTransformStream, createDecryptStream } from "@/cipher/stream";
 
-const testKey = await generateCryptoKey();
+const testKey = await generateCEK();
 const testIV = await generateCounterBlock();
 
 // 全データを結合してUint8Arrayにする

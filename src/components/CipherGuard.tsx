@@ -6,8 +6,10 @@ import { useEffect, useState } from "react";
 import { IconCpu, IconKey } from "@tabler/icons-react";
 
 import { type EncryptedKeys, savePasswordEncryptedKey } from "@/actions/keyring";
+import { decryptCEK, encryptCEK } from "@/cipher/block";
 import { deriveKekFromPassword } from "@/cipher/derive";
 import { arrayBufferToBase64, base64ToArrayBuffer } from "@/cipher/helper";
+import { generateCEK } from "@/cipher/key";
 
 const KEY_STORAGE_ID = "TWILIGHT_CEK";
 
@@ -73,21 +75,12 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
 
         try {
             // Using AES-CTR for CEK
-            const newContentKey = await crypto.subtle.generateKey({ name: "AES-CTR", length: 256 }, true, ["encrypt", "decrypt"]);
+            const newContentKey = await generateCEK();
+
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const kek = await deriveKekFromPassword(password, salt);
-            const iv = crypto.getRandomValues(new Uint8Array(16));
-            const rawContentKey = await crypto.subtle.exportKey("raw", newContentKey);
 
-            const ciphertext = await crypto.subtle.encrypt(
-                {
-                    // Using AES-GCM for KEK
-                    name: "AES-GCM",
-                    iv: iv,
-                },
-                kek,
-                rawContentKey,
-            );
+            const { ciphertext, iv } = await encryptCEK(newContentKey, kek);
 
             await savePasswordEncryptedKey({
                 salt: arrayBufferToBase64(salt.buffer),
@@ -114,19 +107,12 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
             const { salt, iv, ciphertext } = encryptedKeys.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
 
-            const decryptedCEK = await crypto.subtle.decrypt(
-                {
-                    name: "AES-GCM",
-                    iv: new Uint8Array(base64ToArrayBuffer(iv)),
-                },
-                kek,
-                base64ToArrayBuffer(ciphertext),
-            );
+            const decryptedCEK = await decryptCEK(base64ToArrayBuffer(ciphertext), new Uint8Array(base64ToArrayBuffer(iv)), kek);
 
-            const importedCEK = await crypto.subtle.importKey("raw", decryptedCEK, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+            // Set key
+            await saveKeyToLocalStorage(decryptedCEK);
+            setContentKey(decryptedCEK);
 
-            await saveKeyToLocalStorage(importedCEK);
-            setContentKey(importedCEK);
             setStatus("ready");
         } catch (e) {
             console.error(e);

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { remuxToDash } from "ikaria.js";
 
 import { createMedia, getChunkUploadUrl } from "@/actions/upload";
-import { generateCounterBlock } from "@/cipher/key";
+import { generateCounterBlock } from "@/cipher/counter";
 import { createCryptoTransformStream } from "@/cipher/stream";
 
 const requestPersistentStorage = async (): Promise<boolean> => {

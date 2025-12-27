@@ -11,3 +11,11 @@ export function calculateCounter(baseIv: Uint8Array, byteOffset: number): Uint8A
 
     return counterBlock;
 }
+
+export function generateCounterBlock(): Uint8Array {
+    const iv = new Uint8Array(16);
+    // 前半8バイトをランダムなNonceにする
+    // 後半8バイトはCounter (初期値0) として残す
+    crypto.getRandomValues(iv.subarray(0, 8));
+    return iv;
+}
