@@ -6,8 +6,7 @@ import { useState } from "react";
 import { remuxToDash } from "ikaria.js";
 
 import { createMedia, getChunkUploadUrl } from "@/actions/upload";
-import { generateCounterBlock } from "@/cipher/counter";
-import { createCryptoTransformStream } from "@/cipher/stream";
+import { createEncryptTransformStream } from "@/cipher/stream";
 
 const requestPersistentStorage = async (): Promise<boolean> => {
     if (navigator.storage?.persist) {
@@ -86,10 +85,9 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
             const encryptAndUpload = async (filename: string, uploadUrl: string) => {
                 const fileHandle = await outDir.getFileHandle(filename);
                 const file = await fileHandle.getFile();
-                const counterBlock = generateCounterBlock();
 
                 setStatusMessage(`Encrypting: ${filename}`);
-                const encryptTransform = await createCryptoTransformStream(contentKey, counterBlock);
+                const { encryptTransform, counterBlock } = await createEncryptTransformStream(contentKey);
                 const encryptedChunks: Uint8Array[] = [counterBlock];
 
                 const reader = file.stream().pipeThrough(encryptTransform).getReader();

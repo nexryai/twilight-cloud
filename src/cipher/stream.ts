@@ -1,46 +1,51 @@
-import { calculateCounter } from "./counter";
+import { calculateCounter, generateCounterBlockWithRandomNonce } from "./counter";
 
-export async function createCryptoTransformStream(key: CryptoKey, baseIv: Uint8Array, startOffset = 0): Promise<TransformStream> {
+export async function createEncryptTransformStream(key: CryptoKey, startOffset = 0): Promise<{ encryptTransform: TransformStream; counterBlock: Uint8Array<ArrayBufferLike> }> {
+    const counterBlock = generateCounterBlockWithRandomNonce();
+
     let currentOffset = startOffset;
     let buffer = new Uint8Array(0);
 
-    return new TransformStream({
-        async transform(chunk, controller) {
-            // バッファに結合
-            const newBuffer = new Uint8Array(buffer.length + chunk.byteLength);
-            newBuffer.set(buffer);
-            newBuffer.set(chunk, buffer.length);
-            buffer = newBuffer;
+    return {
+        encryptTransform: new TransformStream({
+            async transform(chunk, controller) {
+                // バッファに結合
+                const newBuffer = new Uint8Array(buffer.length + chunk.byteLength);
+                newBuffer.set(buffer);
+                newBuffer.set(chunk, buffer.length);
+                buffer = newBuffer;
 
-            // 16バイト(1ブロック)以上溜まったら送り出す
-            if (buffer.length >= 16) {
-                // 処理可能な最大バイト数 (16の倍数)
-                const processLength = Math.floor(buffer.length / 16) * 16;
+                // 16バイト(1ブロック)以上溜まったら送り出す
+                if (buffer.length >= 16) {
+                    // 処理可能な最大バイト数 (16の倍数)
+                    const processLength = Math.floor(buffer.length / 16) * 16;
 
-                const chunkToProcess = buffer.slice(0, processLength);
-                buffer = buffer.slice(processLength); // 残りをバッファに戻す
+                    const chunkToProcess = buffer.slice(0, processLength);
+                    buffer = buffer.slice(processLength); // 残りをバッファに戻す
 
-                // 暗号化
-                const counter = calculateCounter(baseIv, currentOffset);
-                const processed = await crypto.subtle.encrypt({ name: "AES-CTR", counter: counter as BufferSource, length: 64 }, key, chunkToProcess);
+                    // 暗号化
+                    const counter = calculateCounter(counterBlock, currentOffset);
+                    const processed = await crypto.subtle.encrypt({ name: "AES-CTR", counter: counter as BufferSource, length: 64 }, key, chunkToProcess);
 
-                // オフセット更新
-                currentOffset += chunkToProcess.byteLength;
-                controller.enqueue(new Uint8Array(processed));
-            }
-        },
+                    // オフセット更新
+                    currentOffset += chunkToProcess.byteLength;
+                    controller.enqueue(new Uint8Array(processed));
+                }
+            },
 
-        async flush(controller) {
-            // バッファに残った端数（16バイト未満）を処理
-            if (buffer.length > 0) {
-                const counter = calculateCounter(baseIv, currentOffset);
-                const processed = await crypto.subtle.encrypt({ name: "AES-CTR", counter: counter as BufferSource, length: 64 }, key, buffer);
+            async flush(controller) {
+                // バッファに残った端数（16バイト未満）を処理
+                if (buffer.length > 0) {
+                    const counter = calculateCounter(counterBlock, currentOffset);
+                    const processed = await crypto.subtle.encrypt({ name: "AES-CTR", counter: counter as BufferSource, length: 64 }, key, buffer);
 
-                // 残りを出力
-                controller.enqueue(new Uint8Array(processed));
-            }
-        },
-    });
+                    // 残りを出力
+                    controller.enqueue(new Uint8Array(processed));
+                }
+            },
+        }),
+        counterBlock: counterBlock,
+    };
 }
 
 export async function createDecryptStream(key: CryptoKey, sourceReader: ReadableStreamDefaultReader<Uint8Array>): Promise<ReadableStream> {
