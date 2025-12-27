@@ -25,6 +25,8 @@ export default function PlayerView({ contentKey, mediaId, manifestName }: Player
                     await navigator.serviceWorker.register("/sw.js");
                     const registration = await navigator.serviceWorker.ready;
 
+                    console.log("ServiceWorker is ready.");
+
                     if (registration.active) {
                         registration.active.postMessage({ type: "SET_KEY", key: jwk });
                         setIsSwReady(true);
