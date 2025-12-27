@@ -1,6 +1,6 @@
 import { calculateCounter } from "./counter";
 
-export async function createCryptoTransformStream(key: CryptoKey, baseIv: Uint8Array, startOffset = 0) {
+export async function createCryptoTransformStream(key: CryptoKey, baseIv: Uint8Array, startOffset = 0): Promise<TransformStream> {
     let currentOffset = startOffset;
     let buffer = new Uint8Array(0);
 
@@ -43,7 +43,7 @@ export async function createCryptoTransformStream(key: CryptoKey, baseIv: Uint8A
     });
 }
 
-export async function createDecryptStream(key: CryptoKey, sourceReader: ReadableStreamDefaultReader<Uint8Array>) {
+export async function createDecryptStream(key: CryptoKey, sourceReader: ReadableStreamDefaultReader<Uint8Array>): Promise<ReadableStream> {
     return new ReadableStream({
         async start(controller) {
             let buffer = new Uint8Array(0);

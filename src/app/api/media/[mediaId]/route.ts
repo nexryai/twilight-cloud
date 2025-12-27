@@ -8,7 +8,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { generateSignedUrl } from "@/s3";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ mediaId: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ mediaId: string }> }): Promise<NextResponse<{ url?: string; error?: string }>> {
     const session = await auth.api.getSession({
         headers: await headers(),
     });

@@ -11,7 +11,7 @@ export async function getSession() {
     });
 }
 
-export async function signIn(_prevState: string | undefined, formData: FormData) {
+export async function signIn(_prevState: string | undefined, formData: FormData): Promise<string> {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
@@ -31,7 +31,7 @@ export async function signIn(_prevState: string | undefined, formData: FormData)
     redirect("/");
 }
 
-export async function signUp(_prevState: string | undefined, formData: FormData) {
+export async function signUp(_prevState: string | undefined, formData: FormData): Promise<string> {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
