@@ -159,12 +159,12 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
                 />
                 <div className="mt-4 flex items-center gap-2">
                     <strong className="text-sm">Status:</strong>
-                    <span className={`text-sm ${isProcessing ? "text-blue-600 font-medium" : "text-gray-700"}`}>{statusMessage}</span>
+                    <span className={`text-sm ${isProcessing ? "text-gray-500 font-medium" : "text-gray-700"}`}>{statusMessage}</span>
                 </div>
                 {isProcessing && (
                     <div className="mt-4">
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                            <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                         </div>
                         <div className="text-right text-xs mt-1 text-gray-400 font-mono">{Math.round(uploadProgress)}%</div>
                     </div>
