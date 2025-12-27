@@ -11,5 +11,5 @@ export async function deriveKekFromPassword(password: string, salt: Uint8Array):
         outputType: "binary",
     });
 
-    return await crypto.subtle.importKey("raw", hashUint8 as Uint8Array<ArrayBuffer>, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+    return crypto.subtle.importKey("raw", hashUint8 as Uint8Array<ArrayBuffer>, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
