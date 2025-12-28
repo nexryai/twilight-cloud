@@ -7,7 +7,7 @@ import { IconArrowLeft, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from 
 import { AnimatePresence, motion } from "motion/react";
 
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
-import { encryptMetadata } from "@/cipher/block";
+import { decryptMetadata, encryptMetadata } from "@/cipher/block";
 import CipherText from "./CipherText";
 
 const Uploader = dynamic(() => import("@/components/VideoUploader"), {
@@ -15,8 +15,11 @@ const Uploader = dynamic(() => import("@/components/VideoUploader"), {
     loading: () => <p className="text-center p-12 text-gray-500">Loading uploader...</p>,
 });
 
+type DecryptedVideo = Video & { decryptedName: string };
+
 const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
     const [videos, setVideos] = useState<Video[]>([]);
+    const [decryptedVideos, setDecryptedVideos] = useState<DecryptedVideo[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [loading, setLoading] = useState(true);
@@ -38,6 +41,19 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
         fetchData();
     }, []);
 
+    useEffect(() => {
+        const decryptAll = async () => {
+            const results = await Promise.all(
+                videos.map(async (v) => ({
+                    ...v,
+                    decryptedName: await decryptMetadata(v.name, metadataKey),
+                })),
+            );
+            setDecryptedVideos(results);
+        };
+        if (videos.length > 0) decryptAll();
+    }, [videos, metadataKey]);
+
     const handleCreatePlaylist = async () => {
         const playlistName = prompt("Enter new playlist name:");
         if (playlistName) {
@@ -52,21 +68,27 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
     };
 
     const filteredVideos = useMemo(() => {
-        if (!selectedPlaylist) return videos;
+        if (!selectedPlaylist) return decryptedVideos;
         const videoIdsInPlaylist = new Set(selectedPlaylist.videoIds.map((id) => id.toString()));
-        return videos.filter((video) => videoIdsInPlaylist.has(video._id.toString()));
-    }, [videos, selectedPlaylist]);
+        return decryptedVideos.filter((video) => videoIdsInPlaylist.has(video._id.toString()));
+    }, [decryptedVideos, selectedPlaylist]);
 
     const groupedVideos = useMemo(() => {
-        return filteredVideos.reduce(
+        const groups = filteredVideos.reduce(
             (acc, video) => {
-                const firstLetter = video.name?.[0]?.toUpperCase() ?? "#";
+                const firstLetter = video.decryptedName?.[0]?.toUpperCase() ?? "#";
                 if (!acc[firstLetter]) acc[firstLetter] = [];
                 acc[firstLetter].push(video);
                 return acc;
             },
-            {} as Record<string, Video[]>,
+            {} as Record<string, DecryptedVideo[]>,
         );
+
+        for (const letter in groups) {
+            groups[letter].sort((a, b) => a.decryptedName.localeCompare(b.decryptedName));
+        }
+
+        return groups;
     }, [filteredVideos]);
 
     if (loading) return <div className="text-center p-12 text-gray-500 animate-pulse">Loading media...</div>;
@@ -152,7 +174,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                             className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
                                                         >
                                                             <IconVideo size={18} />
-                                                            <CipherText encryptedData={video.name} />
+                                                            <span>{video.decryptedName}</span>
                                                         </motion.a>
                                                     ))}
                                                 </div>

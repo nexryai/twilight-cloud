@@ -58,14 +58,14 @@ export async function getVideo(id: string): Promise<Video | null> {
 
 export async function getVideos(): Promise<Video[]> {
     const user = await getUserOrFail();
-    const videos = await db.collection<Video>("media").find({ userId: user.id }).sort({ name: 1 }).toArray();
+    const videos = await db.collection<Video>("media").find({ userId: user.id }).toArray();
 
     return JSON.parse(JSON.stringify(videos)) as Video[];
 }
 
 export async function getPlaylists(): Promise<Playlist[]> {
     const user = await getUserOrFail();
-    const playlists = await db.collection<Playlist>("playlists").find({ userId: user.id }).sort({ name: 1 }).toArray();
+    const playlists = await db.collection<Playlist>("playlists").find({ userId: user.id }).toArray();
     return JSON.parse(JSON.stringify(playlists)) as Playlist[];
 }
 
