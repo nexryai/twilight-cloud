@@ -8,3 +8,14 @@ export async function generateCEK(): Promise<CryptoKey> {
         ["encrypt", "decrypt"],
     );
 }
+
+export async function generateMEK(): Promise<CryptoKey> {
+    return await crypto.subtle.generateKey(
+        {
+            name: "AES-GCM",
+            length: 256,
+        },
+        true,
+        ["encrypt", "decrypt"],
+    );
+}

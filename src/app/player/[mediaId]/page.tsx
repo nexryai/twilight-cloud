@@ -5,6 +5,7 @@ import { IconCalendarEvent, IconFileInfo, IconPlaylistAdd, IconSubtitlesEdit, Ic
 import { getKeys } from "@/actions/keyring";
 import { getVideo } from "@/actions/media";
 import CipherGuard from "@/components/CipherGuard";
+import CipherText from "@/components/CipherText";
 import PlayerView from "@/components/PlayerView";
 
 export default async function PlayerPage({ params }: { params: { mediaId: string } }) {
@@ -32,7 +33,9 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
             <div className="flex justify-between items-stretch">
                 <div className="flex flex-col gap-2 rounded-lg px-4 py-2 bg-gray-100 min-w-1/3 max-w-1/2">
                     <div>
-                        <p className="text-xl font-bold">{video.name}</p>
+                        <p className="text-xl font-bold">
+                            <CipherText encryptedData={video.name} />
+                        </p>
                     </div>
                     <div>
                         <p className="flex items-center gap-2 text-sm text-gray-500">

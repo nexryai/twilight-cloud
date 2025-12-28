@@ -6,12 +6,14 @@ import { useEffect, useState } from "react";
 import { IconCpu, IconKey } from "@tabler/icons-react";
 
 import { type EncryptedKeys, savePasswordEncryptedKey } from "@/actions/keyring";
-import { decryptCEK, encryptCEK } from "@/cipher/block";
+import { decryptKey, encryptKey } from "@/cipher/block";
 import { deriveKekFromPassword } from "@/cipher/derive";
 import { arrayBufferToBase64, base64ToArrayBuffer } from "@/cipher/helper";
-import { generateCEK } from "@/cipher/key";
+import { generateCEK, generateMEK } from "@/cipher/key";
+import { useCipherKey } from "@/context/CipherContext";
 
-const KEY_STORAGE_ID = "TWILIGHT_CEK";
+const CEK_STORAGE_ID = "TWILIGHT_CEK";
+const MEK_STORAGE_ID = "TWILIGHT_MEK";
 
 const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
     <div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">
@@ -21,48 +23,59 @@ const FullScreenModal = ({ children }: { children: React.ReactNode }) => (
 
 interface CipherGuardProps<T extends object> {
     encryptedKeys: EncryptedKeys | null;
-    Component: React.ComponentType<{ contentKey: CryptoKey } & T>;
+    Component: React.ComponentType<{ contentKey: CryptoKey; metadataKey: CryptoKey } & T>;
     componentProps: T;
     children: React.ReactNode;
 }
 
 const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProps, children }: CipherGuardProps<T>) => {
+    const { setMetadataKey: setGlobalMetadataKey } = useCipherKey();
     const [status, setStatus] = useState<"loading" | "needs_generation" | "needs_decryption" | "ready" | "error">("loading");
     const [error, setError] = useState<string | null>(null);
     const [useHardware, setUseHardware] = useState(false);
     const [password, setPassword] = useState("");
     const [contentKey, setContentKey] = useState<CryptoKey | null>(null);
+    const [metadataKey, setMetadataKey] = useState<CryptoKey | null>(null);
 
-    const init = async (hasEcnryptedKeys: boolean) => {
-        const savedKey = localStorage.getItem(KEY_STORAGE_ID);
-        if (savedKey) {
+    const init = async (hasEncryptedKeys: boolean) => {
+        const savedCEK = localStorage.getItem(CEK_STORAGE_ID);
+        const savedMEK = localStorage.getItem(MEK_STORAGE_ID);
+
+        if (savedCEK && savedMEK) {
             try {
-                const jwk = JSON.parse(savedKey);
-                const key = await crypto.subtle.importKey("jwk", jwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
-                setContentKey(key);
+                const cekJwk = JSON.parse(savedCEK);
+                const cek = await crypto.subtle.importKey("jwk", cekJwk, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+                setContentKey(cek);
+
+                const mekJwk = JSON.parse(savedMEK);
+                const mek = await crypto.subtle.importKey("jwk", mekJwk, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+                setMetadataKey(mek);
+                setGlobalMetadataKey(mek);
+
                 setStatus("ready");
                 return;
             } catch (e) {
                 console.error(e);
-                localStorage.removeItem(KEY_STORAGE_ID);
+                localStorage.removeItem(CEK_STORAGE_ID);
+                localStorage.removeItem(MEK_STORAGE_ID);
             }
         }
 
-        if (!hasEcnryptedKeys) {
+        if (!hasEncryptedKeys) {
             setStatus("needs_generation");
         } else {
             setStatus("needs_decryption");
         }
     };
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: ignore here
+    // biome-ignore lint/correctness/useExhaustiveDependencies: Ignore here
     useEffect(() => {
         init(!!encryptedKeys);
     }, [encryptedKeys]);
 
-    const saveKeyToLocalStorage = async (key: CryptoKey) => {
+    const saveKeyToLocalStorage = async (key: CryptoKey, id: string) => {
         const jwk = await crypto.subtle.exportKey("jwk", key);
-        localStorage.setItem(KEY_STORAGE_ID, JSON.stringify(jwk));
+        localStorage.setItem(id, JSON.stringify(jwk));
     };
 
     const handleGenerateKey = async () => {
@@ -74,22 +87,39 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
         setError(null);
 
         try {
-            // Using AES-CTR for CEK
             const newContentKey = await generateCEK();
+            const newMetadataKey = await generateMEK();
 
             const salt = crypto.getRandomValues(new Uint8Array(16));
             const kek = await deriveKekFromPassword(password, salt);
 
-            const { ciphertext, iv } = await encryptCEK(newContentKey, kek);
+            const encryptedCEK = await encryptKey(newContentKey, kek);
+            const encryptedMEK = await encryptKey(newMetadataKey, kek);
 
-            await savePasswordEncryptedKey({
-                salt: arrayBufferToBase64(salt.buffer),
-                iv: arrayBufferToBase64(iv.buffer),
-                ciphertext: arrayBufferToBase64(ciphertext),
-            });
+            await savePasswordEncryptedKey(
+                {
+                    salt: arrayBufferToBase64(salt.buffer),
+                    iv: arrayBufferToBase64(encryptedCEK.iv.buffer),
+                    ciphertext: arrayBufferToBase64(encryptedCEK.ciphertext),
+                },
+                "CEK",
+            );
 
-            await saveKeyToLocalStorage(newContentKey);
+            await savePasswordEncryptedKey(
+                {
+                    salt: arrayBufferToBase64(salt.buffer),
+                    iv: arrayBufferToBase64(encryptedMEK.iv.buffer),
+                    ciphertext: arrayBufferToBase64(encryptedMEK.ciphertext),
+                },
+                "MEK",
+            );
+
+            await saveKeyToLocalStorage(newContentKey, CEK_STORAGE_ID);
+            await saveKeyToLocalStorage(newMetadataKey, MEK_STORAGE_ID);
+
             setContentKey(newContentKey);
+            setMetadataKey(newMetadataKey);
+            setGlobalMetadataKey(newMetadataKey);
             setStatus("ready");
         } catch (e) {
             console.error(e);
@@ -107,11 +137,34 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
             const { salt, iv, ciphertext } = encryptedKeys.passwordEncryptedKey;
             const kek = await deriveKekFromPassword(password, new Uint8Array(base64ToArrayBuffer(salt)));
 
-            const decryptedCEK = await decryptCEK(base64ToArrayBuffer(ciphertext), new Uint8Array(base64ToArrayBuffer(iv)), kek);
-
-            // Set key
-            await saveKeyToLocalStorage(decryptedCEK);
+            const decryptedCEK = await decryptKey(base64ToArrayBuffer(ciphertext), new Uint8Array(base64ToArrayBuffer(iv)), kek);
+            await saveKeyToLocalStorage(decryptedCEK, CEK_STORAGE_ID);
             setContentKey(decryptedCEK);
+
+            if (encryptedKeys.passwordEncryptedMetadataKey) {
+                const mData = encryptedKeys.passwordEncryptedMetadataKey;
+                const decryptedMEK = await decryptKey(base64ToArrayBuffer(mData.ciphertext), new Uint8Array(base64ToArrayBuffer(mData.iv)), kek);
+
+                await saveKeyToLocalStorage(decryptedMEK, MEK_STORAGE_ID);
+                setMetadataKey(decryptedMEK);
+                setGlobalMetadataKey(decryptedMEK);
+            } else {
+                const newMetadataKey = await generateMEK();
+                const encryptedMEK = await encryptKey(newMetadataKey, kek);
+
+                await savePasswordEncryptedKey(
+                    {
+                        salt: salt,
+                        iv: arrayBufferToBase64(encryptedMEK.iv.buffer),
+                        ciphertext: arrayBufferToBase64(encryptedMEK.ciphertext),
+                    },
+                    "MEK",
+                );
+
+                await saveKeyToLocalStorage(newMetadataKey, MEK_STORAGE_ID);
+                setMetadataKey(newMetadataKey);
+                setGlobalMetadataKey(newMetadataKey);
+            }
 
             setStatus("ready");
         } catch (e) {
@@ -192,9 +245,9 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
                 {children}
             </div>
             {status !== "loading" && status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
-            {status === "ready" && contentKey && (
+            {status === "ready" && contentKey && metadataKey && (
                 <div id="cipher-content">
-                    <Component contentKey={contentKey} {...componentProps} />
+                    <Component contentKey={contentKey} metadataKey={metadataKey} {...componentProps} />
                 </div>
             )}
         </div>

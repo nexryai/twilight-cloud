@@ -7,13 +7,15 @@ import { IconArrowLeft, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from 
 import { AnimatePresence, motion } from "motion/react";
 
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
+import { encryptMetadata } from "@/cipher/block";
+import CipherText from "./CipherText";
 
 const Uploader = dynamic(() => import("@/components/VideoUploader"), {
     ssr: false,
     loading: () => <p className="text-center p-12 text-gray-500">Loading uploader...</p>,
 });
 
-const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
+const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
     const [videos, setVideos] = useState<Video[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
@@ -40,7 +42,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
         const playlistName = prompt("Enter new playlist name:");
         if (playlistName) {
             try {
-                await createPlaylist(playlistName);
+                await createPlaylist(await encryptMetadata(playlistName, metadataKey));
                 const playlistsData = await getPlaylists();
                 setPlaylists(playlistsData);
             } catch (error) {
@@ -92,7 +94,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                 <AnimatePresence mode="wait">
                     {showUploader ? (
                         <motion.div key="uploader" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="bg-white rounded-xl border border-gray-100 p-8">
-                            <Uploader contentKey={contentKey} />
+                            <Uploader contentKey={contentKey} metadataKey={metadataKey} />
                         </motion.div>
                     ) : (
                         <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
@@ -119,7 +121,9 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                         onClick={() => setSelectedPlaylist(playlist)}
                                         className={`bg-white border border-gray-200 rounded-md p-4 transition-shadow cursor-pointer ${selectedPlaylist?._id.toString() === playlist._id.toString() ? "ring-2 ring-black" : ""}`}
                                     >
-                                        <h2 className="text-lg font-semibold mb-2">{playlist.name}</h2>
+                                        <h2 className="text-lg font-semibold mb-2">
+                                            <CipherText encryptedData={playlist.name} />
+                                        </h2>
                                         <p className="text-gray-600">{playlist.videoIds.length} videos</p>
                                     </motion.div>
                                 ))}
@@ -148,7 +152,7 @@ const VideoDashboard = ({ contentKey }: { contentKey: CryptoKey }) => {
                                                             className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
                                                         >
                                                             <IconVideo size={18} />
-                                                            {video.name}
+                                                            <CipherText encryptedData={video.name} />
                                                         </motion.a>
                                                     ))}
                                                 </div>

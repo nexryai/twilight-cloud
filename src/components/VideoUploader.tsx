@@ -6,6 +6,7 @@ import { useState } from "react";
 import { remuxToDash } from "ikaria.js";
 
 import { createMedia, getChunkUploadUrl } from "@/actions/upload";
+import { encryptMetadata } from "@/cipher/block";
 import { createEncryptTransformStream } from "@/cipher/stream";
 
 const requestPersistentStorage = async (): Promise<boolean> => {
@@ -24,9 +25,10 @@ const runConversion = async (fileName: string) => {
 
 interface VideoUploaderProps {
     contentKey: CryptoKey;
+    metadataKey: CryptoKey;
 }
 
-const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
+const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState<string>("Please select a file");
     const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -69,7 +71,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey }) => {
 
             // 1. Register media and get manifest upload URL
             setStatusMessage("Registering media...");
-            const { mediaId, url: manifestUploadUrl } = await createMedia(manifestFilename, selectedFile.type, selectedFile.name);
+            const { mediaId, url: manifestUploadUrl } = await createMedia(manifestFilename, selectedFile.type, await encryptMetadata(selectedFile.name, metadataKey));
 
             // 2. Calculate total size for progress tracking
             const sizes = await Promise.all(
