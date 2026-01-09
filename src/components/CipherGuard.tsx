@@ -143,7 +143,7 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
 
             if (encryptedKeys.passwordEncryptedMetadataKey) {
                 const mData = encryptedKeys.passwordEncryptedMetadataKey;
-                const decryptedMEK = await decryptKey(base64ToArrayBuffer(mData.ciphertext), new Uint8Array(base64ToArrayBuffer(mData.iv)), kek);
+                const decryptedMEK = await decryptKey(base64ToArrayBuffer(mData.ciphertext), new Uint8Array(base64ToArrayBuffer(mData.iv)), kek, "AES-GCM");
 
                 await saveKeyToLocalStorage(decryptedMEK, MEK_STORAGE_ID);
                 setMetadataKey(decryptedMEK);

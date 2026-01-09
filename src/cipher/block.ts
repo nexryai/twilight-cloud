@@ -8,10 +8,10 @@ export async function encryptKey(key: CryptoKey, kek: CryptoKey): Promise<{ ciph
     };
 }
 
-export async function decryptKey(encryptedKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, kek: CryptoKey): Promise<CryptoKey> {
+export async function decryptKey(encryptedKey: ArrayBuffer, iv: Uint8Array<ArrayBuffer>, kek: CryptoKey, argo?: string): Promise<CryptoKey> {
     const decryptedCEK = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, kek, encryptedKey);
 
-    return crypto.subtle.importKey("raw", decryptedCEK, { name: "AES-CTR" }, true, ["encrypt", "decrypt"]);
+    return crypto.subtle.importKey("raw", decryptedCEK, { name: argo ?? "AES-CTR" }, true, ["encrypt", "decrypt"]);
 }
 
 export async function encryptMetadata(plaintext: string, mek: CryptoKey): Promise<string> {
