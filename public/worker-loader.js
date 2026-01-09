@@ -1,0 +1,1 @@
+import "https://ikaria-cloud-cdn.nexryai.workers.dev/worker-browser.js";
