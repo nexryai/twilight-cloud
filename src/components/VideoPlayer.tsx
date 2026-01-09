@@ -31,6 +31,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
 
         player.addRequestInterceptor(requestInterceptor);
 
+        player.updateSettings({
+            streaming: {
+                buffer: {
+                    bufferTimeDefault: 30,
+                    bufferTimeAtTopQuality: 30, // 最高画質時のバッファ時間
+                    bufferTimeAtTopQualityLongForm: 60, // 長時間コンテンツ用
+                },
+            },
+        });
+
         player.initialize(videoRef.current, url, false);
 
         // biome-ignore lint/suspicious/noExplicitAny: dash.js
