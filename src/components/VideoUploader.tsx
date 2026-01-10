@@ -50,7 +50,6 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
         try {
             const opfsRoot = await navigator.storage.getDirectory();
 
-            // Write source file to OPFS
             const fileHandle = await opfsRoot.getFileHandle(selectedFile.name, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(selectedFile);
@@ -69,11 +68,9 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
             const manifestFilename = fileList.find((name) => name.endsWith(".mpd"));
             if (!manifestFilename) throw new Error("Manifest (.mpd) not found");
 
-            // 1. Register media and get manifest upload URL
             setStatusMessage("Registering media...");
             const { mediaId, url: manifestUploadUrl } = await createMedia(manifestFilename, selectedFile.type, await encryptMetadata(selectedFile.name, metadataKey));
 
-            // 2. Calculate total size for progress tracking
             const sizes = await Promise.all(
                 fileList.map(async (name) => {
                     const fileHandle = await outDir.getFileHandle(name);
@@ -88,7 +85,6 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
                 const fileHandle = await outDir.getFileHandle(filename);
                 const file = await fileHandle.getFile();
 
-                setStatusMessage(`Encrypting: ${filename}`);
                 const { encryptTransform, counterBlock } = await createEncryptTransformStream(contentKey);
                 const encryptedChunks: Uint8Array[] = [counterBlock];
 
@@ -101,7 +97,6 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
 
                 const uploadBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
 
-                setStatusMessage(`Uploading: ${filename}`);
                 const response = await fetch(uploadUrl, {
                     method: "PUT",
                     body: uploadBlob,
@@ -114,14 +109,22 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
                 setUploadProgress((totalUploadedSize / totalSize) * 100);
             };
 
-            // 3. Upload Manifest
+            setStatusMessage("Uploading manifest...");
             await encryptAndUpload(manifestFilename, manifestUploadUrl);
 
-            // 4. Upload Chunks
             const chunks = fileList.filter((name) => name !== manifestFilename);
-            for (const filename of chunks) {
-                const { url: chunkUrl } = await getChunkUploadUrl(mediaId, filename);
-                await encryptAndUpload(filename, chunkUrl);
+            const CONCURRENCY = 4;
+
+            for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+                const batch = chunks.slice(i, i + CONCURRENCY);
+                setStatusMessage(`Uploading chunks: ${i + 1} - ${Math.min(i + CONCURRENCY, chunks.length)} / ${chunks.length}`);
+
+                await Promise.all(
+                    batch.map(async (filename) => {
+                        const { url: chunkUrl } = await getChunkUploadUrl(mediaId, filename);
+                        await encryptAndUpload(filename, chunkUrl);
+                    }),
+                );
             }
 
             setStatusMessage(`Upload complete! Media ID: ${mediaId}`);
@@ -148,8 +151,8 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
 
     return (
         <div className="p-5 max-w-2xl mx-auto">
-            <h1 className="text-xl font-bold mb-4 font-sans">DASH Video Uploader</h1>
-            <div className="mb-5 p-4 border border-gray-200 rounded-lg shadow-sm">
+            <h1 className="text-xl font-bold mb-4 font-sans">Upload from your browser</h1>
+            <div className="mb-5 p-4 border border-gray-200 rounded-lg">
                 <input
                     type="file"
                     accept="video/webm,video/mp4"
@@ -163,10 +166,10 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
                 </div>
                 {isProcessing && (
                     <div className="mt-4">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div className={`bg-black h-2 rounded-full transition-all duration-300 ${uploadProgress === 0 ? "w-full animate-pulse" : ""}`} style={{ width: uploadProgress === 0 ? "100%" : `${uploadProgress}%` }}></div>
                         </div>
-                        <div className="text-right text-xs mt-1 text-gray-400 font-mono">{Math.round(uploadProgress)}%</div>
+                        <div className="text-right text-xs mt-1 text-gray-400 font-mono">{uploadProgress === 0 ? "Processing..." : `${Math.round(uploadProgress)}%`}</div>
                     </div>
                 )}
             </div>

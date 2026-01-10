@@ -34,6 +34,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
         player.updateSettings({
             streaming: {
                 buffer: {
+                    initialBufferLevel: 7,
                     bufferTimeDefault: 60,
                     bufferTimeAtTopQuality: 60, // 最高画質時のバッファ時間
                     bufferTimeAtTopQualityLongForm: 90, // 長時間コンテンツ用
