@@ -45,7 +45,7 @@ export default function PlayerView({ contentKey, mediaId, manifestName }: Player
     }
 
     return (
-        <div className="bg-white rounded-lg overflow-hidden">
+        <div className="overflow-hidden">
             <VideoPlayer mediaId={mediaId} manifestName={manifestName} />
         </div>
     );
