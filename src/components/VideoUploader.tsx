@@ -97,16 +97,35 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
 
                 const uploadBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
 
-                const response = await fetch(uploadUrl, {
-                    method: "PUT",
-                    body: uploadBlob,
-                    headers: { "Content-Type": "application/octet-stream" },
-                });
+                const MAX_RETRIES = 5;
+                const RETRY_DELAY_MS = 4000;
+                let lastError: Error | null = null;
 
-                if (!response.ok) throw new Error(`Upload failed for ${filename}: ${response.status}`);
+                for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                    try {
+                        const response = await fetch(uploadUrl, {
+                            method: "PUT",
+                            body: uploadBlob,
+                            headers: { "Content-Type": "application/octet-stream" },
+                        });
 
-                totalUploadedSize += file.size + 16;
-                setUploadProgress((totalUploadedSize / totalSize) * 100);
+                        if (!response.ok) {
+                            throw new Error(`Upload failed for ${filename}: ${response.status}`);
+                        }
+
+                        totalUploadedSize += file.size + 16;
+                        setUploadProgress((totalUploadedSize / totalSize) * 100);
+                        return;
+                    } catch (error) {
+                        lastError = error instanceof Error ? error : new Error(String(error));
+                        if (attempt < MAX_RETRIES - 1) {
+                            console.warn(`Upload attempt ${attempt + 1} failed for ${filename}, retrying in ${RETRY_DELAY_MS}ms...`);
+                            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+                        }
+                    }
+                }
+
+                throw new Error(`Upload failed after ${MAX_RETRIES} attempts for ${filename}: ${lastError?.message}`);
             };
 
             setStatusMessage("Uploading manifest...");
