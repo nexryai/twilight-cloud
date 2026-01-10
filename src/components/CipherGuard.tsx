@@ -240,13 +240,13 @@ const CipherGuard = <T extends object>({ encryptedKeys, Component, componentProp
     };
 
     return (
-        <div id="cipher-guard">
-            <div id="cipher-skeleton" className={status === "loading" ? "loading" : "hidden"}>
+        <div id="cipher-guard" className="h-full">
+            <div id="cipher-skeleton" className={status === "loading" ? "loading h-full" : "hidden"}>
                 {children}
             </div>
             {status !== "loading" && status !== "ready" && <FullScreenModal>{renderModalContent()}</FullScreenModal>}
             {status === "ready" && contentKey && metadataKey && (
-                <div id="cipher-content">
+                <div id="cipher-content" className="h-full">
                     <Component contentKey={contentKey} metadataKey={metadataKey} {...componentProps} />
                 </div>
             )}
