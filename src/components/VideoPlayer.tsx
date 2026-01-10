@@ -229,80 +229,78 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
             <canvas
                 ref={canvasRef}
                 className={`fixed inset-0 w-[120%] h-[120%] -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 
-        pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
-        ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
+                pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
+                ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
             />
-
-            <div className="relative z-10 w-[90%] aspect-video bg-black rounded-lg overflow-hidden group">
-                <video ref={videoRef} playsInline className="w-full h-full cursor-pointer" onClick={togglePlay} />
-
-                {/* Custom Controls */}
-                <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                        <div className="h-1.5 bg-white/20 rounded-full cursor-pointer relative group/progress" onClick={handleSeek}>
-                            {/* Buffered */}
-                            <div className="absolute h-full bg-white/30 rounded-full" style={{ width: `${(buffered / duration) * 100}%` }} />
-                            {/* Progress */}
-                            <div className="absolute h-full bg-white rounded-full" style={{ width: `${(currentTime / duration) * 100}%` }} />
-                            {/* Thumb */}
-                            <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" style={{ left: `${(currentTime / duration) * 100}%`, marginLeft: "-6px" }} />
-                        </div>
+            <div className="relative z-10 aspect-video w-auto overflow-hidden group">
+                <video ref={videoRef} playsInline className="w-full h-full cursor-pointer object-contain bg-transparent" onClick={togglePlay} />
+            </div>
+            {/* Custom Controls */}
+            <div className={`fixed bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/90 via-black/60 to-transparent p-4 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
+                {/* Progress Bar */}
+                <div className="mb-4">
+                    <div className="h-1.5 bg-white/20 rounded-full cursor-pointer relative group/progress" onClick={handleSeek}>
+                        {/* Buffered */}
+                        <div className="absolute h-full bg-white/30 rounded-full" style={{ width: `${(buffered / duration) * 100}%` }} />
+                        {/* Progress */}
+                        <div className="absolute h-full bg-white rounded-full" style={{ width: `${(currentTime / duration) * 100}%` }} />
+                        {/* Thumb */}
+                        <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" style={{ left: `${(currentTime / duration) * 100}%`, marginLeft: "-6px" }} />
                     </div>
+                </div>
 
-                    <div className="flex items-center justify-between">
-                        {/* Left Controls */}
-                        <div className="flex items-center gap-3">
-                            <button type="button" onClick={togglePlay} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                                {isPlaying ? <IconPlayerPause size={20} className="text-white" /> : <IconPlayerPlay size={20} className="text-white" />}
+                <div className="flex items-center justify-between">
+                    {/* Left Controls */}
+                    <div className="flex items-center gap-3">
+                        <button type="button" onClick={togglePlay} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                            {isPlaying ? <IconPlayerPause size={20} className="text-white" /> : <IconPlayerPlay size={20} className="text-white" />}
+                        </button>
+
+                        {/* Volume */}
+                        <div className="flex items-center gap-2 group/volume">
+                            <button type="button" onClick={toggleMute} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+                                {isMuted || volume === 0 ? <IconVolumeOff size={18} className="text-white" /> : <IconVolume size={18} className="text-white" />}
                             </button>
-
-                            {/* Volume */}
-                            <div className="flex items-center gap-2 group/volume">
-                                <button type="button" onClick={toggleMute} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-                                    {isMuted || volume === 0 ? <IconVolumeOff size={18} className="text-white" /> : <IconVolume size={18} className="text-white" />}
-                                </button>
-                                <div className="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300">
-                                    <div className="h-1 bg-white/20 rounded-full cursor-pointer relative" onClick={handleVolumeChange}>
-                                        <div className="absolute h-full bg-white rounded-full" style={{ width: `${isMuted ? 0 : volume * 100}%` }} />
-                                    </div>
+                            <div className="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-300">
+                                <div className="h-1 bg-white/20 rounded-full cursor-pointer relative" onClick={handleVolumeChange}>
+                                    <div className="absolute h-full bg-white rounded-full" style={{ width: `${isMuted ? 0 : volume * 100}%` }} />
                                 </div>
                             </div>
-
-                            {/* Time */}
-                            <span className="text-white text-sm font-medium">
-                                {formatTime(currentTime)} / {formatTime(duration)}
-                            </span>
                         </div>
 
-                        {/* Right Controls */}
-                        <div className="flex items-center gap-2">
-                            {/* Speed */}
-                            <div className="relative">
-                                <button type="button" onClick={() => setShowSpeedMenu(!showSpeedMenu)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-                                    <IconSettings size={18} className="text-white" />
-                                </button>
-                                {showSpeedMenu && (
-                                    <div className="absolute w-32 bottom-full right-0 mb-2 bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden">
-                                        {speedOptions.map((speed) => (
-                                            <button type="button" key={speed} onClick={() => changePlaybackRate(speed)} className={`block w-full px-4 py-2 text-sm text-left hover:bg-white/10 transition-colors ${playbackRate === speed ? "text-white font-bold" : "text-gray-200"}`}>
-                                                {speed}x
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                        {/* Time */}
+                        <span className="text-white text-sm font-medium">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                        </span>
+                    </div>
 
-                            {/* PiP */}
-                            <button type="button" onClick={togglePiP} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-                                <IconPictureInPicture size={18} className="text-white" />
+                    {/* Right Controls */}
+                    <div className="flex items-center gap-2">
+                        {/* Speed */}
+                        <div className="relative">
+                            <button type="button" onClick={() => setShowSpeedMenu(!showSpeedMenu)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+                                <IconSettings size={18} className="text-white" />
                             </button>
-
-                            {/* Fullscreen */}
-                            <button type="button" onClick={toggleFullscreen} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
-                                <IconMaximize size={18} className="text-white" />
-                            </button>
+                            {showSpeedMenu && (
+                                <div className="absolute w-32 bottom-full right-0 mb-2 bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden">
+                                    {speedOptions.map((speed) => (
+                                        <button type="button" key={speed} onClick={() => changePlaybackRate(speed)} className={`block w-full px-4 py-2 text-sm text-left hover:bg-white/10 transition-colors ${playbackRate === speed ? "text-white font-bold" : "text-gray-200"}`}>
+                                            {speed}x
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+
+                        {/* PiP */}
+                        <button type="button" onClick={togglePiP} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+                            <IconPictureInPicture size={18} className="text-white" />
+                        </button>
+
+                        {/* Fullscreen */}
+                        <button type="button" onClick={toggleFullscreen} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+                            <IconMaximize size={18} className="text-white" />
+                        </button>
                     </div>
                 </div>
             </div>
