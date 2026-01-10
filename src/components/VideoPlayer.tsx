@@ -225,15 +225,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
     return (
-        <div ref={containerRef} className="relative mx-auto h-full aspect-video max-w-full overflow-hidden bg-black pb-16" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+        <div
+            ref={containerRef}
+            className="relative mx-auto h-full max-w-full aspect-video overflow-hidden bg-black group pb-8"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
             <canvas
                 ref={canvasRef}
                 className={`fixed inset-0 w-[120%] h-[120%] -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 
                 pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
                 ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
             />
-            <div className="relative z-10 h-full flex items-center justify-center group">
-                <video ref={videoRef} playsInline className="max-h-full max-w-full cursor-pointer bg-transparent" onClick={togglePlay} />
+
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+                <video ref={videoRef} playsInline className="max-w-full max-h-full cursor-pointer object-contain" onClick={togglePlay} />
             </div>
             {/* Custom Controls */}
             <div className={`fixed bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/90 via-black/60 to-transparent p-4 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
