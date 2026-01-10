@@ -4,7 +4,7 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { MediaPlayer } from "dashjs";
+import shaka from "shaka-player/dist/shaka-player.compiled";
 
 interface VideoPlayerProps {
     mediaId: string;
@@ -25,50 +25,44 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
         let animationFrameId: number;
 
         const url = `/virtual-dash/${manifestName}?mediaId=${mediaId}`;
-        const player = MediaPlayer().create();
+        const player = new shaka.Player(video);
 
-        // biome-ignore lint/suspicious/noExplicitAny: dash.js
-        const requestInterceptor = (request: any) => {
-            const uri = new URL(request.url, window.location.origin);
+        player.getNetworkingEngine()?.registerRequestFilter((type, request) => {
+            const uri = new URL(request.uris[0], window.location.origin);
             uri.searchParams.set("mediaId", mediaId);
-            request.url = uri.toString();
-            return Promise.resolve(request);
-        };
+            request.uris[0] = uri.toString();
+        });
+
+        player.configure({
+            streaming: {
+                bufferingGoal: 60,
+                rebufferingGoal: 3,
+                bufferBehind: 30,
+                segmentPrefetchLimit: 6,
+            },
+        });
 
         const updateAmbient = () => {
-            // 再生中のみキャンバスを更新。一時停止中は描画処理を止め、最後のフレームを維持。
             if (ctx && video.readyState >= 2 && !video.paused && !video.ended) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
             animationFrameId = requestAnimationFrame(updateAmbient);
         };
 
-        player.addRequestInterceptor(requestInterceptor);
-        player.updateSettings({
-            streaming: {
-                buffer: {
-                    initialBufferLevel: 7,
-                    bufferTimeDefault: 60,
-                    bufferTimeAtTopQuality: 60,
-                    bufferTimeAtTopQualityLongForm: 90,
-                },
-            },
-        });
-
-        player.initialize(video, url, false);
-
         const handleShow = () => setIsAmbientVisible(true);
         const handleHide = () => setIsAmbientVisible(false);
 
-        // 再生開始やシーク完了時に表示
         video.addEventListener("playing", handleShow);
         video.addEventListener("canplay", handleShow);
-        // バッファリング（読み込み中）時のみ非表示
         video.addEventListener("waiting", handleHide);
 
         canvas.width = 64;
         canvas.height = 36;
         updateAmbient();
+
+        player.load(url).catch((e) => {
+            console.error("Shaka Player Error:", e);
+        });
 
         return () => {
             cancelAnimationFrame(animationFrameId);
@@ -87,7 +81,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
                 ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
             />
-            <video ref={videoRef} controls playsInline className="relative z-10 w-[90%] aspect-video bg-black rounded-lg" />
+            <video ref={videoRef} controls playsInline className="relative z-10 w-[90%] aspect-video bg-black rounded-lg shadow-2xl" />
         </div>
     );
 };
