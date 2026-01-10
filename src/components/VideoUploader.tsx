@@ -32,6 +32,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState<string>("Please select a file");
     const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [_isRecoveryMode, setIsRecoveryMode] = useState(false);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -70,6 +71,131 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
 
             setStatusMessage("Registering media...");
             const { mediaId, url: manifestUploadUrl } = await createMedia(manifestFilename, selectedFile.type, await encryptMetadata(selectedFile.name, metadataKey));
+
+            const sizes = await Promise.all(
+                fileList.map(async (name) => {
+                    const fileHandle = await outDir.getFileHandle(name);
+                    const file = await fileHandle.getFile();
+                    return file.size + 16;
+                }),
+            );
+            const totalSize = sizes.reduce((acc, size) => acc + size, 0);
+            let totalUploadedSize = 0;
+
+            const encryptAndUpload = async (filename: string, uploadUrl: string, id: string) => {
+                const fileHandle = await outDir.getFileHandle(filename);
+                const file = await fileHandle.getFile();
+
+                const { encryptTransform, counterBlock } = await createEncryptTransformStream(contentKey);
+                const encryptedChunks: Uint8Array[] = [counterBlock];
+
+                const reader = file.stream().pipeThrough(encryptTransform).getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    encryptedChunks.push(value);
+                }
+
+                const uploadBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
+
+                const MAX_RETRIES = 5;
+                const RETRY_DELAY_MS = 4000;
+                let lastError: Error | null = null;
+
+                for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                    try {
+                        const response = await fetch(uploadUrl, {
+                            method: "PUT",
+                            body: uploadBlob,
+                            headers: { "Content-Type": "application/octet-stream" },
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Upload failed for ${filename}: ${response.status}`);
+                        }
+
+                        totalUploadedSize += file.size + 16;
+                        setUploadProgress((totalUploadedSize / totalSize) * 100);
+                        return;
+                    } catch (error) {
+                        lastError = error instanceof Error ? error : new Error(String(error));
+                        if (attempt < MAX_RETRIES - 1) {
+                            console.warn(`Upload attempt ${attempt + 1} failed for ${filename}, retrying in ${RETRY_DELAY_MS}ms...`);
+                            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+                        }
+                    }
+                }
+
+                throw new Error(`Upload failed after ${MAX_RETRIES} attempts for ${filename} (ID: ${id}): ${lastError?.message}`);
+            };
+
+            setStatusMessage("Uploading manifest...");
+            await encryptAndUpload(manifestFilename, manifestUploadUrl, mediaId);
+
+            const chunks = fileList.filter((name) => name !== manifestFilename);
+            const CONCURRENCY = 4;
+
+            for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+                const batch = chunks.slice(i, i + CONCURRENCY);
+                setStatusMessage(`Uploading chunks: ${i + 1} - ${Math.min(i + CONCURRENCY, chunks.length)} / ${chunks.length}`);
+
+                await Promise.all(
+                    batch.map(async (filename) => {
+                        const { url: chunkUrl } = await getChunkUploadUrl(mediaId, filename);
+                        await encryptAndUpload(filename, chunkUrl, mediaId);
+                    }),
+                );
+            }
+
+            setStatusMessage(`Upload complete! Media ID: ${mediaId}`);
+        } catch (error) {
+            console.error("Processing Error:", error);
+            setStatusMessage(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
+        } finally {
+            setIsProcessing(false);
+            if (event.target) event.target.value = "";
+        }
+    };
+
+    const clearOpfs = async () => {
+        try {
+            const root = await navigator.storage.getDirectory();
+            // @ts-expect-error
+            for await (const name of root.keys()) {
+                await root.removeEntry(name, { recursive: true });
+            }
+        } catch (error) {
+            console.error("Clear OPFS Error:", error);
+        }
+    };
+
+    const handleRecoveryUpload = async () => {
+        const mediaId = prompt("Please enter the Media ID to retry upload:");
+        if (!mediaId || mediaId.trim() === "") {
+            alert("Media ID is required");
+            return;
+        }
+
+        setIsProcessing(true);
+        setIsRecoveryMode(true);
+        setStatusMessage("Checking OPFS for existing files...");
+        setUploadProgress(0);
+
+        try {
+            const opfsRoot = await navigator.storage.getDirectory();
+            const outDir = await opfsRoot.getDirectoryHandle("out");
+            const fileList: string[] = [];
+            // @ts-expect-error
+            for await (const name of outDir.keys()) {
+                fileList.push(name);
+            }
+
+            if (fileList.length === 0) {
+                throw new Error("No files found in OPFS. Please upload a new file.");
+            }
+
+            const manifestFilename = fileList.find((name) => name.endsWith(".mpd"));
+            if (!manifestFilename) throw new Error("Manifest (.mpd) not found in OPFS");
 
             const sizes = await Promise.all(
                 fileList.map(async (name) => {
@@ -129,6 +255,7 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
             };
 
             setStatusMessage("Uploading manifest...");
+            const { url: manifestUploadUrl } = await getChunkUploadUrl(mediaId.trim(), manifestFilename);
             await encryptAndUpload(manifestFilename, manifestUploadUrl);
 
             const chunks = fileList.filter((name) => name !== manifestFilename);
@@ -140,31 +267,19 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
 
                 await Promise.all(
                     batch.map(async (filename) => {
-                        const { url: chunkUrl } = await getChunkUploadUrl(mediaId, filename);
+                        const { url: chunkUrl } = await getChunkUploadUrl(mediaId.trim(), filename);
                         await encryptAndUpload(filename, chunkUrl);
                     }),
                 );
             }
 
-            setStatusMessage(`Upload complete! Media ID: ${mediaId}`);
+            setStatusMessage(`Recovery upload complete! Media ID: ${mediaId}`);
         } catch (error) {
-            console.error("Processing Error:", error);
+            console.error("Recovery Upload Error:", error);
             setStatusMessage(`Error: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
         } finally {
             setIsProcessing(false);
-            if (event.target) event.target.value = "";
-        }
-    };
-
-    const clearOpfs = async () => {
-        try {
-            const root = await navigator.storage.getDirectory();
-            // @ts-expect-error
-            for await (const name of root.keys()) {
-                await root.removeEntry(name, { recursive: true });
-            }
-        } catch (error) {
-            console.error("Clear OPFS Error:", error);
+            setIsRecoveryMode(false);
         }
     };
 
@@ -191,6 +306,13 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
                         <div className="text-right text-xs mt-1 text-gray-400 font-mono">{uploadProgress === 0 ? "Processing..." : `${Math.round(uploadProgress)}%`}</div>
                     </div>
                 )}
+            </div>
+            <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg">
+                <h2 className="text-sm font-semibold mb-2 text-amber-900">Recovery Option</h2>
+                <p className="text-xs text-amber-800 mb-3">If upload failed, you can retry using files remaining in OPFS</p>
+                <button type="button" onClick={handleRecoveryUpload} disabled={isProcessing} className="px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded-full hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                    Retry Upload with Media ID
+                </button>
             </div>
         </div>
     );
