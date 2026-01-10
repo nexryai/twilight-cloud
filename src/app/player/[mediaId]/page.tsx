@@ -19,7 +19,7 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
     return (
         <div className="fixed inset-0 bg-black overflow-hidden flex items-center justify-center">
             <div className="w-full h-full flex flex-col">
-                <div className="flex-1 z-10 p-8 flex justify-between items-start transition-opacity duration-500 ease-in-out">
+                <div className="flex-none z-10 p-8 flex justify-between items-start transition-opacity duration-500 ease-in-out">
                     <div className="flex flex-col gap-2 text-white drop-shadow-lg">
                         <p className="text-2xl">
                             <CipherText encryptedData={video.name} />
@@ -55,16 +55,18 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
                     </div>
                 </div>
 
-                <CipherGuard
-                    encryptedKeys={encryptedKeys}
-                    Component={PlayerView}
-                    componentProps={{
-                        mediaId,
-                        manifestName: video.manifest.split("/").pop() || "",
-                    }}
-                >
-                    <div className="w-full h-full bg-black animate-pulse" />
-                </CipherGuard>
+                <div className="flex-1 relative min-h-0">
+                    <CipherGuard
+                        encryptedKeys={encryptedKeys}
+                        Component={PlayerView}
+                        componentProps={{
+                            mediaId,
+                            manifestName: video.manifest.split("/").pop() || "",
+                        }}
+                    >
+                        <div className="w-full h-full bg-black animate-pulse" />
+                    </CipherGuard>
+                </div>
             </div>
         </div>
     );

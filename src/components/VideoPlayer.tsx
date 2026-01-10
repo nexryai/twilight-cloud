@@ -232,7 +232,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
                 ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
             />
-            <div className="relative z-10 aspect-video w-auto overflow-hidden group">
+            <div className="relative z-10 w-full h-full overflow-hidden group">
                 <video ref={videoRef} playsInline className="w-full h-full cursor-pointer object-contain bg-transparent" onClick={togglePlay} />
             </div>
             {/* Custom Controls */}
