@@ -4,7 +4,6 @@ import { IconCalendarEvent, IconFileInfo, IconPlaylistAdd, IconSubtitlesEdit, Ic
 
 import { getKeys } from "@/actions/keyring";
 import { getVideo } from "@/actions/media";
-import BackButton from "@/components/BackButton";
 import CipherGuard from "@/components/CipherGuard";
 import CipherText from "@/components/CipherText";
 import PlayerView from "@/components/PlayerView";
@@ -18,7 +17,7 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
     }
 
     return (
-        <div className="fixed inset-0 bg-black overflow-hidden flex items-center justify-center" style={{ viewTransitionName: "player-slide" }}>
+        <div className="fixed inset-0 bg-black overflow-hidden flex items-center justify-center">
             <div className="w-full h-full flex flex-col">
                 <div className="flex-1 z-10 p-8 flex justify-between items-start transition-opacity duration-500 ease-in-out">
                     <div className="flex flex-col gap-2 text-white drop-shadow-lg">
@@ -49,10 +48,13 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
                             </button>
                         </div>
                         <div className="flex items-center bg-black/20 rounded-full border border-white/10 overflow-hidden text-white">
-                            <BackButton />
+                            <a href="/" type="button" className="flex items-center gap-2 px-6 py-3 border-l border-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+                                <IconX size={20} />
+                            </a>
                         </div>
                     </div>
                 </div>
+
                 <CipherGuard
                     encryptedKeys={encryptedKeys}
                     Component={PlayerView}

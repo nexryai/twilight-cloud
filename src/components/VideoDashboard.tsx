@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { IconArrowLeft, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from "@tabler/icons-react";
@@ -19,40 +18,12 @@ const Uploader = dynamic(() => import("@/components/VideoUploader"), {
 type DecryptedVideo = Video & { decryptedName: string };
 
 const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
-    const router = useRouter();
     const [videos, setVideos] = useState<Video[]>([]);
     const [decryptedVideos, setDecryptedVideos] = useState<DecryptedVideo[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [loading, setLoading] = useState(true);
     const [showUploader, setShowUploader] = useState(false);
-
-    const navigateToPlayer = (id: string) => {
-        const href = `/player/${id}`;
-
-        // View Transition APIがサポートされているか確認
-        if (!document.startViewTransition) {
-            router.push(href);
-            return;
-        }
-
-        // ダッシュボードにview-transition-nameを設定
-        const main = document.querySelector("main") || document.body.querySelector("div");
-        if (main) {
-            main.style.viewTransitionName = "player-slide";
-        }
-
-        const transition = document.startViewTransition(() => {
-            router.push(href);
-        });
-
-        // トランジション完了後にクリア
-        transition.finished.finally(() => {
-            if (main) {
-                main.style.viewTransitionName = "";
-            }
-        });
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -193,8 +164,8 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                 <h3 className="text-xl font-bold mt-8 mb-4 border-b border-gray-200 pb-2">{letter}</h3>
                                                 <div className="space-y-3 flex flex-col">
                                                     {vids.map((video) => (
-                                                        <motion.button
-                                                            onClick={() => navigateToPlayer(video._id.toString())}
+                                                        <motion.a
+                                                            href={`/player/${video._id}`}
                                                             layout
                                                             key={video._id.toString()}
                                                             initial={{ opacity: 0, x: -10 }}
@@ -204,7 +175,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                         >
                                                             <IconVideo size={18} />
                                                             <span>{video.decryptedName}</span>
-                                                        </motion.button>
+                                                        </motion.a>
                                                     ))}
                                                 </div>
                                             </motion.div>
