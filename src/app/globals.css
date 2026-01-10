@@ -17,3 +17,43 @@ body {
     color: var(--foreground);
     font-family: Arial, Helvetica, sans-serif;
 }
+
+/* View Transition API */
+::view-transition-old(page-transition),
+::view-transition-new(page-transition) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+/* 新しい要素の入場 */
+::view-transition-new(page-transition) {
+  animation-name: fade-interact-in;
+}
+
+/* 古い要素の退場 */
+::view-transition-old(page-transition) {
+  animation-name: fade-interact-out;
+}
+
+@keyframes fade-interact-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-interact-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}

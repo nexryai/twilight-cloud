@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { IconArrowLeft, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from "@tabler/icons-react";
@@ -164,18 +165,10 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                 <h3 className="text-xl font-bold mt-8 mb-4 border-b border-gray-200 pb-2">{letter}</h3>
                                                 <div className="space-y-3 flex flex-col">
                                                     {vids.map((video) => (
-                                                        <motion.a
-                                                            href={`/player/${video._id}`}
-                                                            layout
-                                                            key={video._id.toString()}
-                                                            initial={{ opacity: 0, x: -10 }}
-                                                            animate={{ opacity: 1, x: 0 }}
-                                                            exit={{ opacity: 0, x: 10 }}
-                                                            className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200"
-                                                        >
+                                                        <Link href={`/player/${video._id}`} key={video._id.toString()} className="flex gap-2 items-center bg-white p-3 rounded-md hover:bg-gray-50 transition-colors border border-gray-200">
                                                             <IconVideo size={18} />
                                                             <span>{video.decryptedName}</span>
-                                                        </motion.a>
+                                                        </Link>
                                                     ))}
                                                 </div>
                                             </motion.div>

@@ -41,7 +41,7 @@ export default function PlayerView({ contentKey, mediaId, manifestName }: Player
     }, [contentKey]);
 
     if (!isSwReady) {
-        return <div className="bg-gray-200 aspect-video animate-pulse" />;
+        return <div className="bg-gray-800 aspect-video animate-pulse" />;
     }
 
     return (
