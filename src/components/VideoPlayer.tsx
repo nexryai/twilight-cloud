@@ -81,7 +81,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 pointer-events-none blur-[100px] saturate-[2] brightness-[0.6] transition-opacity duration-1000
                 ${isAmbientVisible ? "opacity-70" : "opacity-0"}`}
             />
-            <video ref={videoRef} controls playsInline className="relative z-10 w-[90%] aspect-video bg-black rounded-lg shadow-2xl" />
+            <video ref={videoRef} controls playsInline className="relative z-10 w-[90%] aspect-video bg-black rounded-lg" />
         </div>
     );
 };
