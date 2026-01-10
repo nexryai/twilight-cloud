@@ -9,7 +9,6 @@ import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } fr
 import { decryptMetadata, encryptMetadata } from "@/cipher/block";
 import CipherText from "./CipherText";
 
-
 type DecryptedVideo = Video & { decryptedName: string };
 
 // biome-ignore lint/correctness/noUnusedFunctionParameters: ignore here
