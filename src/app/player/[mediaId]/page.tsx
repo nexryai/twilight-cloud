@@ -27,7 +27,7 @@ export default async function PlayerPage({ params }: { params: { mediaId: string
                         <div className="flex items-center gap-4 text-sm text-gray-300">
                             <p className="flex items-center gap-2">
                                 <IconCalendarEvent size={16} />
-                                {new Date(video.createdAt).toLocaleDateString()}
+                                {new Date(video.createdAt).toDateString()}
                             </p>
                             <p className="flex gap-2 items-center font-mono">
                                 <IconFileInfo size={18} />
