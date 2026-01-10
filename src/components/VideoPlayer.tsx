@@ -29,6 +29,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const [showSpeedMenu, setShowSpeedMenu] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [buffered, setBuffered] = useState(0);
+    const [isFullWidth, setIsFullWidth] = useState(false);
 
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current) return;
@@ -119,6 +120,28 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
             video.removeEventListener("durationchange", handleDurationChange);
             video.removeEventListener("volumechange", handleVolumeChange);
             video.removeEventListener("progress", handleProgress);
+        };
+    }, []);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const checkWidth = () => {
+            const videoWidth = video.getBoundingClientRect().width;
+            const windowWidth = window.innerWidth;
+            setIsFullWidth(Math.abs(videoWidth - windowWidth) < 16);
+        };
+
+        const observer = new ResizeObserver(checkWidth);
+        observer.observe(video);
+        window.addEventListener("resize", checkWidth);
+
+        checkWidth();
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", checkWidth);
         };
     }, []);
 
@@ -225,12 +248,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
     return (
-        <div
-            ref={containerRef}
-            className="relative mx-auto h-full max-w-full aspect-video overflow-hidden bg-black group pb-8"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-        >
+        <div ref={containerRef} className="relative mx-auto h-full max-w-full aspect-video overflow-hidden bg-black group pb-8" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
             <canvas
                 ref={canvasRef}
                 className={`fixed inset-0 w-[120%] h-[120%] -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 
@@ -239,7 +257,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
             />
 
             <div className="relative z-10 w-full h-full flex items-center justify-center">
-                <video ref={videoRef} playsInline className="max-w-full max-h-full cursor-pointer object-contain" onClick={togglePlay} />
+                <video
+                    ref={videoRef}
+                    playsInline
+                    className={`max-w-full max-h-full cursor-pointer object-contain transition-all 
+                        ${!isFullWidth ? "rounded-lg" : ""}`}
+                    onClick={togglePlay}
+                />
             </div>
             {/* Custom Controls */}
             <div className={`fixed bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/90 via-black/60 to-transparent p-4 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
