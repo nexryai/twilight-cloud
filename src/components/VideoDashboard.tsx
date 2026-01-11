@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { IconChevronRight, IconFolders, IconHelpCircle, IconMoodPuzzled, IconPlus, IconUpload, IconUserCircle, IconVideo } from "@tabler/icons-react";
+import { IconFolders, IconHelpCircle, IconMoodPuzzled, IconPlus, IconUpload, IconUserCircle, IconVideo } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
@@ -160,7 +160,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                         </AnimatePresence>
                     </main>
 
-                    <a href="/upload" className="fixed bottom-8 right-8 p-4 rounded-full border border-gray-200 bg-white">
+                    <a href="/upload" className="fixed bottom-8 right-8 p-4 rounded-full border border-gray-200 bg-white shadow-sm">
                         <IconUpload />
                     </a>
                 </div>

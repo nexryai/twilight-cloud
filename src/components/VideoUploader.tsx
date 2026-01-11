@@ -3,6 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 
+import { IconRestore } from "@tabler/icons-react";
 import { remuxToDash } from "ikaria.js";
 
 import { createMedia, getChunkUploadUrl } from "@/actions/upload";
@@ -308,7 +309,9 @@ const VideoUploader: React.FC<VideoUploaderProps> = ({ contentKey, metadataKey }
                 )}
             </div>
             <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg">
-                <h2 className="text-sm font-semibold mb-2 text-amber-900">Recovery Option</h2>
+                <h2 className="flex gap-2 items-center text-sm font-semibold mb-2 text-amber-900">
+                    <IconRestore size={18} /> Recovery Option
+                </h2>
                 <p className="text-xs text-amber-800 mb-3">If upload failed, you can retry using files remaining in OPFS</p>
                 <button type="button" onClick={handleRecoveryUpload} disabled={isProcessing} className="px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded-full hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
                     Retry Upload with Media ID

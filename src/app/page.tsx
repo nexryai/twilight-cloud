@@ -8,16 +8,13 @@ export default async function Home() {
 
     return (
         <div className="mb-32">
-            <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
+            <div className="bg-[#f7f7f7] w-full h-32 flex justify-between">
                 <div className="flex items-center ml-14">
                     <div className="flex flex-col gap-1">
                         <h1 className="text-2xl font-bold ml-2">My Videos</h1>
-                        <div className="flex items-center justify-between gap-2 pl-2 h-8">
-                            <span>Welcome back, {session?.user.name}!</span>
-                        </div>
                     </div>
                 </div>
-                <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-64 w-auto object-cover" />
+                <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-32 w-auto object-cover mr-1" />
             </div>
             <div id="home-content">
                 <CipherGuard encryptedKeys={encryptedKeys} Component={VideoDashboard} componentProps={{}}>
