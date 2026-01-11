@@ -31,17 +31,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const [buffered, setBuffered] = useState(0);
     const [isFullWidth, setIsFullWidth] = useState(false);
 
-    const handleError = (error) => {
-        if (error instanceof Error) {
-            // shaka crashed with an unhandled native error
-            console.error(`shaka-player crashed! : ${error}`);
-        }
-
-        console.error(`shaka-player error: ${error}`);
-    };
-
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current) return;
+
+        // biome-ignore lint/suspicious/noExplicitAny: ignore here
+        const handleError = (error: any) => {
+            if (error instanceof Error) {
+                // shaka crashed with an unhandled native error
+                console.error(`shaka-player crashed! : ${error}`);
+            }
+
+            console.error(`shaka-player error: ${error}`);
+        };
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
@@ -64,7 +65,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 bufferingGoal: 60,
                 rebufferingGoal: 3,
                 bufferBehind: 30,
-                segmentPrefetchLimit: 6,
+                segmentPrefetchLimit: 4,
                 retryParameters: {
                     maxAttempts: 4,
                 },
