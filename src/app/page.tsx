@@ -1,5 +1,3 @@
-import { IconChevronDown, IconUserCircle } from "@tabler/icons-react";
-
 import { getSession } from "@/actions/auth";
 import { getKeys } from "@/actions/keyring";
 import CipherGuard from "@/components/CipherGuard";
@@ -12,7 +10,7 @@ export default async function Home() {
         <div className="mb-32">
             <div className="bg-[#f7f7f7] w-full h-64 flex justify-between">
                 <div className="flex items-center ml-14">
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
                         <h1 className="text-2xl font-bold ml-2">My Videos</h1>
                         <div className="flex items-center justify-between gap-2 pl-2 h-8">
                             <span>Welcome back, {session?.user.name}!</span>
