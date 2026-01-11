@@ -6,19 +6,9 @@ import { useFormStatus } from "react-dom";
 import { IconLogin2, IconUserCheck } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { signIn, signUp } from "@/actions/auth";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Mock auth actions for demo
-const signIn = async (prevState: any, formData: FormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return undefined;
-};
-
-const signUp = async (prevState: any, formData: FormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return undefined;
-};
 
 function SubmitButton({ type }: { type: "signin" | "signup" }) {
     const { pending } = useFormStatus();
