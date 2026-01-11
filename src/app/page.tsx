@@ -14,14 +14,8 @@ export default async function Home() {
                 <div className="flex items-center ml-14">
                     <div className="flex flex-col gap-4">
                         <h1 className="text-2xl font-bold ml-2">My Videos</h1>
-                        <div className="flex items-center justify-between gap-2 pl-2 h-8 rounded-full bg-gray-200/50 hover:bg-gray-300/50 cursor-pointer">
-                            <div className="flex items-center gap-2">
-                                <IconUserCircle />
-                                {session?.user.name}
-                            </div>
-                            <div className="px-2">
-                                <IconChevronDown />
-                            </div>
+                        <div className="flex items-center justify-between gap-2 pl-2 h-8">
+                            <span>Welcome back, {session?.user.name}!</span>
                         </div>
                     </div>
                 </div>

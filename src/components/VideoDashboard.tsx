@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { IconFolders, IconMoodPuzzled, IconPlus, IconUpload, IconVideo } from "@tabler/icons-react";
+import { IconChevronRight, IconFolders, IconHelpCircle, IconMoodPuzzled, IconPlus, IconUpload, IconUserCircle, IconVideo } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
@@ -92,10 +92,20 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
             <AnimatePresence mode="wait">
                 <div className="flex flex-col md:flex-row gap-12">
                     <aside className="w-full md:w-64 shrink-0">
-                        <div className="flex items-center justify-between mb-4 px-2">
+                        <div className="mt-4 flex items-center justify-between mb-4 px-2">
+                            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Settings</h2>
+                            <button type="button" className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+                                <IconHelpCircle size={18} />
+                            </button>
+                        </div>
+                        <button type="button" className="w-full flex items-center gap-3 pl-3 pr-2 py-2 rounded-lg text-sm transition-colors hover:bg-gray-100 text-gray-700">
+                            <IconUserCircle size={18} />
+                            <span>Account Settings</span>
+                        </button>
+                        <div className="mt-6 flex items-center justify-between mb-4 px-2">
                             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Playlists</h2>
                             <button type="button" onClick={handleCreatePlaylist} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                                <IconPlus size={16} />
+                                <IconPlus size={18} />
                             </button>
                         </div>
                         <nav className="space-y-1">
