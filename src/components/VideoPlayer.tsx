@@ -31,6 +31,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
     const [buffered, setBuffered] = useState(0);
     const [isFullWidth, setIsFullWidth] = useState(false);
 
+    const handleError = (error) => {
+        if (error instanceof Error) {
+            // shaka crashed with an unhandled native error
+            console.error(`shaka-player crashed! : ${error}`);
+        }
+
+        console.error(`shaka-player error: ${error}`);
+    };
+
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current) return;
 
@@ -41,6 +50,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
 
         const url = `/virtual-dash/${manifestName}?mediaId=${mediaId}`;
         const player = new shaka.Player(video);
+
+        player.addEventListener("error", (event) => handleError(event));
 
         player.getNetworkingEngine()?.registerRequestFilter((type, request) => {
             const uri = new URL(request.uris[0], window.location.origin);
@@ -54,6 +65,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 rebufferingGoal: 3,
                 bufferBehind: 30,
                 segmentPrefetchLimit: 6,
+                retryParameters: {
+                    maxAttempts: 4,
+                },
             },
         });
 
@@ -76,7 +90,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
         updateAmbient();
 
         player.load(url).catch((e) => {
-            console.error("Shaka Player Error:", e);
+            console.error("Shaka Player Crashed! :", e);
         });
 
         return () => {
