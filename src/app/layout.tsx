@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import Footer from "@/components/Footer";
 import { CipherKeyProvider } from "@/context/CipherContext";
 
 const geistSans = Geist({
@@ -34,10 +35,7 @@ export default function RootLayout({
                     <div className="flex-1 min-h-screen">
                         <CipherKeyProvider>{children}</CipherKeyProvider>
                     </div>
-                    <footer className="border-t border-gray-200 py-12 px-16 flex justify-between items-center text-sm text-gray-500">
-                        <p>&copy; {new Date().getFullYear()} nexryai All rights reserved.</p>
-                        <p className="font-medium text-gray-400">Project of Ablaze</p>
-                    </footer>
+                    <Footer />
                 </div>
             </body>
         </html>
