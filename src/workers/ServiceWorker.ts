@@ -61,7 +61,7 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
 
         console.log(`[ServiceWorker] fetching ${filename}`);
         const upstreamRes = await fetch(downloadUrl,{
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(8000),
         });
 
         if (!upstreamRes.ok || !upstreamRes.body) {
