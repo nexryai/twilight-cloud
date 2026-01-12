@@ -59,17 +59,17 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
             return new Response("Signed URL not found in API response", { status: 500 });
         }
 
-        console.log(`[ServiceWorker] fetching ${downloadUrl}`);
+        console.log(`[ServiceWorker] fetching ${filename}`);
         const upstreamRes = await fetch(downloadUrl,{
             signal: AbortSignal.timeout(8000)
         });
 
         if (!upstreamRes.ok || !upstreamRes.body) {
-            console.error(`[ServiceWorker] fetching ${downloadUrl} -> FAILED: status=${upstreamRes.status}`);
+            console.error(`[ServiceWorker] fetching ${filename} -> FAILED: status=${upstreamRes.status}`);
             return upstreamRes;
         }
 
-        console.log(`[ServiceWorker] fetching ${downloadUrl} -> OK`);
+        console.log(`[ServiceWorker] fetching ${filename} -> OK`);
 
         const reader = upstreamRes.body.getReader();
         const decryptedStream = await createDecryptStream(contentKey, reader);
