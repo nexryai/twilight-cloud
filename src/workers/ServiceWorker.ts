@@ -60,7 +60,7 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         }
 
         console.log(`[ServiceWorker] fetching ${filename}`);
-        
+
         const controller = new AbortController();
         const timeout = setTimeout(() => {
             controller.abort();
