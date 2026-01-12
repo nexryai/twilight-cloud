@@ -60,9 +60,17 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         }
 
         console.log(`[ServiceWorker] fetching ${filename}`);
-        const upstreamRes = await fetch(downloadUrl,{
-            signal: AbortSignal.timeout(8000),
+        
+        const controller = new AbortController();
+        const timeout = setTimeout(() => {
+            controller.abort();
+        }, 6000);
+
+        const upstreamRes = await fetch(downloadUrl, {
+            signal: controller.signal,
         });
+
+        clearTimeout(timeout);
 
         if (!upstreamRes.ok || !upstreamRes.body) {
             console.error(`[ServiceWorker] fetching ${filename} -> FAILED: status=${upstreamRes.status}`);
