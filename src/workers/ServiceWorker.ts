@@ -45,7 +45,6 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         }
 
         const apiUrl = `/api/media/${mediaId}?filename=${encodeURIComponent(filename)}`;
-        console.log(`[ServiceWorker] fetching ${apiUrl}`);
 
         const apiRes = await fetch(apiUrl);
 
@@ -53,8 +52,6 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
             const errorText = await apiRes.text();
             console.error(`Failed to get signed URL for ${filename}. Status: ${apiRes.status}. Body: ${errorText}`);
             return new Response(`Signed URL Error: ${errorText}`, { status: apiRes.status, statusText: apiRes.statusText });
-        } else {
-            console.log(`[ServiceWorker] fetching ${apiUrl} -> OK`);
         }
 
         const { url: downloadUrl } = await apiRes.json();
@@ -63,7 +60,9 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         }
 
         console.log(`[ServiceWorker] fetching ${downloadUrl}`);
-        const upstreamRes = await fetch(downloadUrl);
+        const upstreamRes = await fetch(downloadUrl,{
+            signal: AbortSignal.timeout(8000)
+        });
 
         if (!upstreamRes.ok || !upstreamRes.body) {
             console.error(`[ServiceWorker] fetching ${downloadUrl} -> FAILED: status=${upstreamRes.status}`);
