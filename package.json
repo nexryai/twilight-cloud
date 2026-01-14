@@ -14,7 +14,7 @@
     },
     "dependencies": {
         "@radix-ui/react-tabs": "^1.1.13",
-        "@tabler/icons-react": "^3.36.0",
+        "@tabler/icons-react": "^3.36.1",
         "aws4fetch": "^1.0.20",
         "better-auth": "^1.4.12",
         "class-variance-authority": "^0.7.1",
