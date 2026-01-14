@@ -64,7 +64,7 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         const controller = new AbortController();
         const timeout = setTimeout(() => {
             controller.abort();
-        }, 8000);
+        }, 4750);
 
         const upstreamRes = await fetch(downloadUrl, {
             signal: controller.signal,
