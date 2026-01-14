@@ -67,7 +67,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
                 bufferBehind: 30,
                 segmentPrefetchLimit: 4,
                 retryParameters: {
-                    maxAttempts: 4,
+                    maxAttempts: 8,
                 },
             },
         });
