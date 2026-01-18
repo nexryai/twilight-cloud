@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { IconDotsVertical, IconFolders, IconHelpCircle, IconMoodPuzzled, IconPlus, IconUpload, IconUserCircle, IconVideo } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { createPlaylist, getPlaylists, getVideos, type Playlist, type Video } from "@/actions/media";
+import { addVideoToPlaylist, createPlaylist, getPlaylists, getVideos, type Playlist, removeVideoFromPlaylist, type Video } from "@/actions/media";
 import { decryptMetadata, encryptMetadata } from "@/cipher/block";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CipherText from "./CipherText";
@@ -60,6 +60,16 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                 console.error("Failed to create playlist", error);
             }
         }
+    };
+
+    const handleAddVideoToPlaylist = async (playlistId: string, videoId: string) => {
+        await addVideoToPlaylist(playlistId, videoId);
+        setPlaylists(await getPlaylists());
+    };
+
+    const handleRemoveVideoToPlaylist = async (playlistId: string, videoId: string) => {
+        await removeVideoFromPlaylist(playlistId, videoId);
+        setPlaylists(await getPlaylists());
     };
 
     const filteredVideos = useMemo(() => {
@@ -171,7 +181,13 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                                     <DropdownMenuPortal>
                                                                         <DropdownMenuSubContent>
                                                                             {playlists.map((playlist) => (
-                                                                                <DropdownMenuCheckboxItem key={playlist._id.toString()} checked={playlist.videoIds.includes(video._id)}>
+                                                                                <DropdownMenuCheckboxItem
+                                                                                    key={playlist._id.toString()}
+                                                                                    checked={playlist.videoIds.includes(video._id)}
+                                                                                    onCheckedChange={(checked: boolean) => {
+                                                                                        checked ? handleAddVideoToPlaylist(playlist._id.toString(), video._id.toString()) : handleRemoveVideoToPlaylist(playlist._id.toString(), video._id.toString());
+                                                                                    }}
+                                                                                >
                                                                                     <CipherText encryptedData={playlist.name} />
                                                                                     <span className="ml-auto text-xs opacity-60">{playlist.videoIds.length}</span>
                                                                                 </DropdownMenuCheckboxItem>
