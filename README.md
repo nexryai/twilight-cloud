@@ -1,5 +1,10 @@
 # Twilight Cloud
-Self-hosted video storage and playback web app with end-to-end encryption
+Self-hosted video storage and playback web app with end-to-end encryption  
+<img width="1237" height="931" alt="スクリーンショット 2026-01-11 20 57 08" src="https://github.com/user-attachments/assets/87fdd471-7408-4c5a-8918-6d3f50d49b2c" />
+<img width="1208" height="940" alt="スクリーンショット 2026-01-11 20 58 50" src="https://github.com/user-attachments/assets/3a67ca9c-54d0-4bba-a5d7-b9af471d3767" />
+
+
+Basic functionality is still missing and in development.
 
 ## Features
 

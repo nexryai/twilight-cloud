@@ -64,7 +64,7 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
         const controller = new AbortController();
         const timeout = setTimeout(() => {
             controller.abort();
-        }, 6000);
+        }, 4750);
 
         const upstreamRes = await fetch(downloadUrl, {
             signal: controller.signal,
@@ -102,7 +102,7 @@ async function handleEncryptedStream(url: URL): Promise<Response> {
             headers: headers,
         });
     } catch (error) {
-        console.error("Stream Decryption Error:", error);
+        console.error(`Stream Decryption Error: ${error} (url: ${url})`);
         return new Response("Internal Decryption Error in Service Worker", { status: 500 });
     }
 }
