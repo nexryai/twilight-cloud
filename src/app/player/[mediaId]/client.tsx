@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-import { IconCalendarEvent, IconFileInfo, IconPlaylistAdd, IconSubtitlesEdit, IconTrashX, IconX } from "@tabler/icons-react";
+import { IconCalendarEvent, IconFileInfo, IconPhotoPlus, IconSubtitlesEdit, IconTrashX, IconX } from "@tabler/icons-react";
 
 import type { EncryptedKeys } from "@/actions/keyring";
 import type { Video } from "@/actions/media";
@@ -62,7 +62,7 @@ export default function PlayerPageClient({ encryptedKeys, video, mediaId }: Play
                                 <IconSubtitlesEdit size={20} />
                             </button>
                             <button type="button" className="flex items-center gap-2 px-6 py-3 border-l border-white/10 hover:bg-white/20 transition-colors cursor-pointer" onClick={captureThumbnail}>
-                                <IconPlaylistAdd size={20} />
+                                <IconPhotoPlus size={20} />
                             </button>
                         </div>
                         <div className="flex items-center bg-black/20 rounded-full border border-white/10 overflow-hidden text-white">
