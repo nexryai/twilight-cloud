@@ -17,7 +17,7 @@ interface PlayerViewProps {
 }
 
 export interface PlayerViewHandle {
-    handleCaptureThumbnail: () => string | undefined;
+    handleCaptureThumbnail: () => void;
 }
 
 const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, mediaId, manifestName }, ref) => {
@@ -29,9 +29,7 @@ const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, 
             const dataUrl = playerRef.current?.capture();
             if (dataUrl) {
                 console.log("Captured image:", dataUrl);
-                return dataUrl;
             }
-            return undefined;
         },
     }));
 
