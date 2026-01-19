@@ -12,13 +12,13 @@ import CipherText from "./CipherText";
 
 type DecryptedVideo = Video & { decryptedName: string };
 
-// biome-ignore lint/correctness/noUnusedFunctionParameters: ignore here
 const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
     const [videos, setVideos] = useState<Video[]>([]);
     const [decryptedVideos, setDecryptedVideos] = useState<DecryptedVideo[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSwReady, setIsSwReady] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -35,6 +35,26 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
         };
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const setupSw = async () => {
+            if ("serviceWorker" in navigator) {
+                try {
+                    const jwk = await crypto.subtle.exportKey("jwk", contentKey);
+                    await navigator.serviceWorker.register("/sw.js");
+                    const registration = await navigator.serviceWorker.ready;
+
+                    if (registration.active) {
+                        registration.active.postMessage({ type: "SET_KEY", key: jwk });
+                        setIsSwReady(true);
+                    }
+                } catch (e) {
+                    console.error("SW initialization failed", e);
+                }
+            }
+        };
+        setupSw();
+    }, [contentKey]);
 
     useEffect(() => {
         const decryptAll = async () => {
@@ -154,7 +174,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                 <div key={video._id.toString()} className="flex flex-col justify-between gap-3 items-center bg-white p-4 rounded-xl border border-gray-200 group transition-colors hover:border-gray-300">
                                                     <div className="flex flex-col gap-3 items-center w-full">
                                                         <a href={`/player/${video._id}`} className="w-full h-42">
-                                                            {video.hasThumbnail ? (
+                                                            {video.hasThumbnail && isSwReady ? (
                                                                 <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className="object-cover rounded-lg w-full h-full" />
                                                             ) : (
                                                                 <div className="flex justify-center items-center p-2 bg-gray-50 rounded-lg text-gray-500 group-hover:text-black transition-all duration-300 w-full h-full">
