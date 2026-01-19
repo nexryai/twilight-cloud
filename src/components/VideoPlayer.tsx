@@ -169,15 +169,20 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, man
         const video = videoRef.current;
         if (!video || video.readyState < 2) return null;
 
+        const targetHeight = 720;
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        const targetWidth = targetHeight * aspectRatio;
+
         const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
         const ctx = canvas.getContext("2d");
         if (!ctx) return null;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        return canvas.toDataURL("image/webp", 0.8);
+        return canvas.toDataURL("image/webp", 0.75);
     };
 
     useImperativeHandle(ref, () => ({
