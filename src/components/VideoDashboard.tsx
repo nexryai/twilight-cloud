@@ -153,7 +153,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                             {vids.map((video) => (
                                                 <div key={video._id.toString()} className="flex flex-col justify-between gap-3 items-center bg-white p-4 rounded-xl border border-gray-200 group transition-colors hover:border-gray-300">
                                                     <div className="flex flex-col gap-3 items-center w-full">
-                                                        <a href={`/player/${video._id}`} className="w-full h-32">
+                                                        <a href={`/player/${video._id}`} className="w-full h-42">
                                                             {video.hasThumbnail ? (
                                                                 <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className="object-cover rounded-lg w-full h-full" />
                                                             ) : (
