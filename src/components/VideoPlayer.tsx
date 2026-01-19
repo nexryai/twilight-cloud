@@ -3,7 +3,7 @@
 /** biome-ignore-all lint/a11y/useKeyWithClickEvents: ? */
 "use client";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { IconMaximize, IconPictureInPicture, IconPlayerPause, IconPlayerPlay, IconSettings, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import shaka from "shaka-player/dist/shaka-player.compiled";
@@ -13,7 +13,11 @@ interface VideoPlayerProps {
     manifestName: string;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
+export interface VideoPlayerRef {
+    capture: () => string | null;
+}
+
+const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, manifestName }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -54,6 +58,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
 
         player.addEventListener("error", (event) => handleError(event));
 
+        // biome-ignore lint/correctness/noUnusedFunctionParameters: ignore here
         player.getNetworkingEngine()?.registerRequestFilter((type, request) => {
             const uri = new URL(request.uris[0], window.location.origin);
             uri.searchParams.set("mediaId", mediaId);
@@ -159,6 +164,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
             window.removeEventListener("resize", checkWidth);
         };
     }, []);
+
+    const capture = (): string | null => {
+        const video = videoRef.current;
+        if (!video || video.readyState < 2) return null;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        return canvas.toDataURL("image/webp", 0.8);
+    };
+
+    useImperativeHandle(ref, () => ({
+        capture,
+    }));
 
     const togglePlay = () => {
         const video = videoRef.current;
@@ -351,6 +375,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ mediaId, manifestName }) => {
             </div>
         </div>
     );
-};
+});
 
+VideoPlayer.displayName = "VideoPlayer";
 export default VideoPlayer;
