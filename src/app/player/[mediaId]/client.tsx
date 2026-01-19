@@ -31,10 +31,7 @@ export default function PlayerPageClient({ encryptedKeys, video, mediaId }: Play
             return;
         }
 
-        const dataUrl = playerViewRef.current?.handleCaptureThumbnail();
-        if (dataUrl) {
-            alert("Captured!");
-        }
+        playerViewRef.current?.handleCaptureThumbnail();
     };
 
     return (
