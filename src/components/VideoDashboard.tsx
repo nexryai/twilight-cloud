@@ -151,60 +151,69 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                         <h3 className="text-lg font-bold mb-4 border-b border-gray-100 pb-2 text-gray-400">{letter}</h3>
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                             {vids.map((video) => (
-                                                <div key={video._id.toString()} className="flex justify-between gap-3 items-center bg-white p-4 rounded-xl border border-gray-200 group transition-colors hover:border-gray-300">
-                                                    <a href={`/player/${video._id}`} className="flex gap-3 items-center overflow-hidden">
-                                                        <div className="p-2 bg-gray-50 rounded-lg text-gray-500 group-hover:text-black transition-all duration-300 shrink-0">
-                                                            <IconVideo size={20} />
+                                                <div key={video._id.toString()} className="flex flex-col justify-between gap-3 items-center bg-white p-4 rounded-xl border border-gray-200 group transition-colors hover:border-gray-300">
+                                                    <div className="flex flex-col gap-3 items-center w-full">
+                                                        <a href={`/player/${video._id}`} className="w-full h-32">
+                                                            {video.hasThumbnail ? (
+                                                                <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className="object-cover rounded-lg w-full h-full" />
+                                                            ) : (
+                                                                <div className="flex justify-center items-center p-2 bg-gray-50 rounded-lg text-gray-500 group-hover:text-black transition-all duration-300 w-full h-full">
+                                                                    <IconVideo size={20} />
+                                                                </div>
+                                                            )}
+                                                        </a>
+                                                        <div className="flex justify-between items-center gap-2 w-full">
+                                                            {/* DO NOT REMOVE min-w-0: Stupid WebKit won't break lines without it ¯\_(ツ)_/¯¯ */}
+                                                            <a href={`/player/${video._id}`} className="min-w-0  ml-2 overflow-hidden font-medium text-gray-700 group-hover:text-black wrap-break-word">
+                                                                {video.decryptedName}
+                                                            </a>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <button type="button" className="cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                                                        <IconDotsVertical size={18} />
+                                                                    </button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent className="w-56" align="start">
+                                                                    <DropdownMenuGroup>
+                                                                        <DropdownMenuItem>
+                                                                            Play
+                                                                            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem>
+                                                                            Rename
+                                                                            <DropdownMenuShortcut>⌘R</DropdownMenuShortcut>
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSub>
+                                                                            <DropdownMenuSubTrigger>Playlists...</DropdownMenuSubTrigger>
+                                                                            <DropdownMenuPortal>
+                                                                                <DropdownMenuSubContent>
+                                                                                    {playlists.map((playlist) => (
+                                                                                        <DropdownMenuCheckboxItem
+                                                                                            key={playlist._id.toString()}
+                                                                                            checked={playlist.videoIds.includes(video._id)}
+                                                                                            onCheckedChange={(checked: boolean) => {
+                                                                                                checked ? handleAddVideoToPlaylist(playlist._id.toString(), video._id.toString()) : handleRemoveVideoToPlaylist(playlist._id.toString(), video._id.toString());
+                                                                                            }}
+                                                                                        >
+                                                                                            <CipherText encryptedData={playlist.name} />
+                                                                                            <span className="ml-auto text-xs opacity-60">{playlist.videoIds.length}</span>
+                                                                                        </DropdownMenuCheckboxItem>
+                                                                                    ))}
+                                                                                    <DropdownMenuSeparator />
+                                                                                    <DropdownMenuItem>New Playlist</DropdownMenuItem>
+                                                                                </DropdownMenuSubContent>
+                                                                            </DropdownMenuPortal>
+                                                                        </DropdownMenuSub>
+                                                                        <DropdownMenuItem>Details</DropdownMenuItem>
+                                                                    </DropdownMenuGroup>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuGroup>
+                                                                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                                                                    </DropdownMenuGroup>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
-                                                        {/* DO NOT REMOVE min-w-0: Stupid WebKit won't break lines without it ¯\_(ツ)_/¯¯ */}
-                                                        <span className="min-w-0 overflow-hidden font-medium text-gray-700 group-hover:text-black wrap-break-word flex-1">{video.decryptedName}</span>
-                                                    </a>
-
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <button type="button" className="flex cursor-pointer p-2 rounded-md hover:bg-gray-100">
-                                                                <IconDotsVertical size={18} />
-                                                            </button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent className="w-56" align="start">
-                                                            <DropdownMenuGroup>
-                                                                <DropdownMenuItem>
-                                                                    Play
-                                                                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem>
-                                                                    Rename
-                                                                    <DropdownMenuShortcut>⌘R</DropdownMenuShortcut>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSub>
-                                                                    <DropdownMenuSubTrigger>Playlists...</DropdownMenuSubTrigger>
-                                                                    <DropdownMenuPortal>
-                                                                        <DropdownMenuSubContent>
-                                                                            {playlists.map((playlist) => (
-                                                                                <DropdownMenuCheckboxItem
-                                                                                    key={playlist._id.toString()}
-                                                                                    checked={playlist.videoIds.includes(video._id)}
-                                                                                    onCheckedChange={(checked: boolean) => {
-                                                                                        checked ? handleAddVideoToPlaylist(playlist._id.toString(), video._id.toString()) : handleRemoveVideoToPlaylist(playlist._id.toString(), video._id.toString());
-                                                                                    }}
-                                                                                >
-                                                                                    <CipherText encryptedData={playlist.name} />
-                                                                                    <span className="ml-auto text-xs opacity-60">{playlist.videoIds.length}</span>
-                                                                                </DropdownMenuCheckboxItem>
-                                                                            ))}
-                                                                            <DropdownMenuSeparator />
-                                                                            <DropdownMenuItem>New Playlist</DropdownMenuItem>
-                                                                        </DropdownMenuSubContent>
-                                                                    </DropdownMenuPortal>
-                                                                </DropdownMenuSub>
-                                                                <DropdownMenuItem>Details</DropdownMenuItem>
-                                                            </DropdownMenuGroup>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuGroup>
-                                                                <DropdownMenuItem>Delete</DropdownMenuItem>
-                                                            </DropdownMenuGroup>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
