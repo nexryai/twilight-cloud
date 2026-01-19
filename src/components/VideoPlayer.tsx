@@ -6,6 +6,7 @@ import type React from "react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { IconMaximize, IconPictureInPicture, IconPlayerPause, IconPlayerPlay, IconSettings, IconVolume, IconVolumeOff } from "@tabler/icons-react";
+import { encode } from "blurhash";
 import shaka from "shaka-player/dist/shaka-player.compiled";
 
 interface VideoPlayerProps {
@@ -14,7 +15,7 @@ interface VideoPlayerProps {
 }
 
 export interface VideoPlayerRef {
-    capture: () => string | null;
+    capture: () => { image: string; hash: string } | null;
 }
 
 const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, manifestName }, ref) => {
@@ -165,7 +166,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, man
         };
     }, []);
 
-    const capture = (): string | null => {
+    const capture = (): { image: string; hash: string } | null => {
         const video = videoRef.current;
         if (!video || video.readyState < 2) return null;
 
@@ -182,7 +183,27 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, man
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        return canvas.toDataURL("image/webp", 0.75);
+        const imageDataUrl = canvas.toDataURL("image/webp", 0.75);
+
+        // Encode blurhash
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d");
+        if (!tempCtx) return null;
+
+        const hashWidth = 64;
+        const hashHeight = Math.round(64 / aspectRatio);
+        tempCanvas.width = hashWidth;
+        tempCanvas.height = hashHeight;
+
+        tempCtx.drawImage(video, 0, 0, hashWidth, hashHeight);
+        const pixels = tempCtx.getImageData(0, 0, hashWidth, hashHeight);
+
+        const hash = encode(pixels.data, pixels.width, pixels.height, 4, 3);
+
+        return {
+            image: imageDataUrl,
+            hash: hash,
+        };
     };
 
     useImperativeHandle(ref, () => ({

@@ -17,6 +17,7 @@ export interface Video {
     createdAt: Date;
     userId: string;
     hasThumbnail?: boolean;
+    blurhash?: string;
 }
 
 export interface Playlist {
@@ -92,9 +93,9 @@ export async function removeVideoFromPlaylist(playlistId: string, videoId: strin
     await db.collection<Playlist>("playlists").updateOne({ _id: new ObjectId(playlistId), userId: user.id }, { $pull: { videoIds: new ObjectId(videoId) } });
 }
 
-export async function addThumbnailToVideo(videoId: string): Promise<string> {
+export async function addThumbnailToVideo(videoId: string, blurhash: string): Promise<string> {
     const user = await getUserOrFail();
-    await db.collection<Video>("media").updateOne({ _id: new ObjectId(videoId), userId: user.id }, { $set: { hasThumbnail: true } });
+    await db.collection<Video>("media").updateOne({ _id: new ObjectId(videoId), userId: user.id }, { $set: { hasThumbnail: true, blurhash } });
 
     return generateSignedUrl(`${videoId}/thumbnail.webp`, "PUT", 300);
 }

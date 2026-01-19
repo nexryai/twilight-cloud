@@ -28,13 +28,14 @@ const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, 
 
     useImperativeHandle(ref, () => ({
         handleCaptureThumbnail: async () => {
-            const dataUrl = playerRef.current?.capture();
-            if (!dataUrl) return;
+            const captured = playerRef.current?.capture();
+            if (!captured) return;
 
             try {
-                const uploadUrl = await addThumbnailToVideo(mediaId);
+                const uploadUrl = await addThumbnailToVideo(mediaId, captured.hash);
+                console.log(`blurhash: ${captured.hash}`);
 
-                const response = await fetch(dataUrl);
+                const response = await fetch(captured.image);
                 const blob = await response.blob();
 
                 const { encryptTransform, counterBlock } = await createEncryptTransformStream(contentKey);
