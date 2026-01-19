@@ -1,10 +1,10 @@
-import { getSession } from "@/actions/auth";
 import { getKeys } from "@/actions/keyring";
+import { getPlaylists, getVideos } from "@/actions/media";
 import CipherGuard from "@/components/CipherGuard";
 import VideoDashboard from "@/components/VideoDashboard";
 
 export default async function Home() {
-    const [session, encryptedKeys] = await Promise.all([getSession(), getKeys()]);
+    const [encryptedKeys, videos, playlists] = await Promise.all([getKeys(), getVideos(), getPlaylists()]);
 
     return (
         <div className="mb-32">
@@ -17,7 +17,7 @@ export default async function Home() {
                 <img src="/eve-M-rtWw1OlnQ-unsplash.jpg" alt="bg" className="h-32 w-auto object-cover mr-1" />
             </div>
             <div id="home-content">
-                <CipherGuard encryptedKeys={encryptedKeys} Component={VideoDashboard} componentProps={{}}>
+                <CipherGuard encryptedKeys={encryptedKeys} Component={VideoDashboard} componentProps={{ videos, initialPlaylists: playlists }}>
                     <div className="mt-32 flex space-x-2 justify-center items-center">
                         <span className="sr-only">Loading...</span>
                         <div className="h-1.5 w-1.5  bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>

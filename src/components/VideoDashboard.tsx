@@ -5,13 +5,20 @@ import { useEffect, useMemo, useState } from "react";
 import { IconDotsVertical, IconFolders, IconHelpCircle, IconMoodPuzzled, IconPlus, IconUpload, IconUserCircle, IconVideo } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { addVideoToPlaylist, createPlaylist, getPlaylists, getVideos, type Playlist, removeVideoFromPlaylist, type Video } from "@/actions/media";
+import { addVideoToPlaylist, createPlaylist, getPlaylists, type Playlist, removeVideoFromPlaylist, type Video } from "@/actions/media";
 import { decryptMetadata, encryptMetadata } from "@/cipher/block";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CipherBlurhash from "./CipherBlurhash";
 import CipherText from "./CipherText";
 
 type DecryptedVideo = Video & { decryptedName: string };
+
+interface VideoDashboardProps {
+    contentKey: CryptoKey;
+    metadataKey: CryptoKey;
+    videos: Video[];
+    initialPlaylists: Playlist[];
+}
 
 const VideoThumbnail = ({ video, isSwReady }: { video: DecryptedVideo; isSwReady: boolean }) => {
     const [isLoaded, setIsLoaded] = useState(false);
@@ -36,29 +43,11 @@ const VideoThumbnail = ({ video, isSwReady }: { video: DecryptedVideo; isSwReady
     );
 };
 
-const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
-    const [videos, setVideos] = useState<Video[]>([]);
+const VideoDashboard = ({ contentKey, metadataKey, videos, initialPlaylists }: VideoDashboardProps) => {
     const [decryptedVideos, setDecryptedVideos] = useState<DecryptedVideo[]>([]);
-    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [playlists, setPlaylists] = useState<Playlist[]>(initialPlaylists);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
-    const [loading, setLoading] = useState(true);
     const [isSwReady, setIsSwReady] = useState(false);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [videosData, playlistsData] = await Promise.all([getVideos(), getPlaylists()]);
-                setVideos(videosData);
-                setPlaylists(playlistsData);
-            } catch (error) {
-                console.error("Failed to fetch media data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
 
     useEffect(() => {
         const setupSw = async () => {
@@ -139,8 +128,6 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
 
         return groups;
     }, [filteredVideos]);
-
-    if (loading) return <div className="text-center p-12 text-gray-500 animate-pulse">Loading media...</div>;
 
     return (
         <div className="max-w-400 mx-auto px-6 md:px-16 pt-12">
