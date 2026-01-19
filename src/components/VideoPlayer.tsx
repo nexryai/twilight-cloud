@@ -182,21 +182,20 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, man
         if (!ctx) return null;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         const imageDataUrl = canvas.toDataURL("image/webp", 0.75);
 
-        // Encode blurhash
+        // encode blurhash
         const tempCanvas = document.createElement("canvas");
         const tempCtx = tempCanvas.getContext("2d");
         if (!tempCtx) return null;
 
-        const hashWidth = 64;
-        const hashHeight = Math.round(64 / aspectRatio);
-        tempCanvas.width = hashWidth;
-        tempCanvas.height = hashHeight;
+        const hashSize = 64;
+        tempCanvas.width = hashSize;
+        tempCanvas.height = hashSize;
 
-        tempCtx.drawImage(video, 0, 0, hashWidth, hashHeight);
-        const pixels = tempCtx.getImageData(0, 0, hashWidth, hashHeight);
+        // アスペクト比を無視して64x64にストレッチして描画
+        tempCtx.drawImage(video, 0, 0, hashSize, hashSize);
+        const pixels = tempCtx.getImageData(0, 0, hashSize, hashSize);
 
         const hash = encode(pixels.data, pixels.width, pixels.height, 4, 3);
 

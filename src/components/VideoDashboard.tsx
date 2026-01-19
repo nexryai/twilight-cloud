@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { addVideoToPlaylist, createPlaylist, getPlaylists, getVideos, type Playlist, removeVideoFromPlaylist, type Video } from "@/actions/media";
 import { decryptMetadata, encryptMetadata } from "@/cipher/block";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import CipherBlurhash from "./CipherBlurhash";
 import CipherText from "./CipherText";
 
 type DecryptedVideo = Video & { decryptedName: string };
@@ -176,6 +177,8 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                                         <a href={`/player/${video._id}`} className="w-full h-42">
                                                             {video.hasThumbnail && isSwReady ? (
                                                                 <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className="object-cover rounded-lg w-full h-full" />
+                                                            ) : video.blurhash ? (
+                                                                <CipherBlurhash encryptedHash={video.blurhash} />
                                                             ) : (
                                                                 <div className="flex justify-center items-center p-2 bg-gray-50 rounded-lg text-gray-500 group-hover:text-black transition-all duration-300 w-full h-full">
                                                                     <IconVideo size={20} />
