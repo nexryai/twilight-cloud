@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
+import { addThumbnailToVideo } from "@/actions/media";
+import { createEncryptTransformStream } from "@/cipher/stream";
 import type { VideoPlayerRef } from "@/components/VideoPlayer";
 
 const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
@@ -25,10 +27,41 @@ const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, 
     const playerRef = useRef<VideoPlayerRef>(null);
 
     useImperativeHandle(ref, () => ({
-        handleCaptureThumbnail: () => {
+        handleCaptureThumbnail: async () => {
             const dataUrl = playerRef.current?.capture();
-            if (dataUrl) {
-                console.log("Captured image:", dataUrl);
+            if (!dataUrl) return;
+
+            try {
+                const uploadUrl = await addThumbnailToVideo(mediaId);
+
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+
+                const { encryptTransform, counterBlock } = await createEncryptTransformStream(contentKey);
+                const encryptedChunks: Uint8Array[] = [counterBlock];
+
+                const reader = blob.stream().pipeThrough(encryptTransform).getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    encryptedChunks.push(value);
+                }
+
+                const encryptedBlob = new Blob(encryptedChunks as BlobPart[], { type: "application/octet-stream" });
+
+                const uploadRes = await fetch(uploadUrl, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/octet-stream",
+                    },
+                    body: encryptedBlob,
+                });
+
+                if (!uploadRes.ok) throw new Error("Failed to upload encrypted thumbnail");
+
+                console.log("Encrypted thumbnail uploaded successfully");
+            } catch (error) {
+                console.error("Thumbnail processing error:", error);
             }
         },
     }));

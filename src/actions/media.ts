@@ -7,6 +7,7 @@ import { ObjectId } from "mongodb";
 
 import { auth } from "@/auth";
 import { db } from "@/db";
+import { generateSignedUrl } from "@/s3";
 
 export interface Video {
     _id: ObjectId;
@@ -15,6 +16,7 @@ export interface Video {
     contentType: string;
     createdAt: Date;
     userId: string;
+    hasThumbnail?: boolean;
 }
 
 export interface Playlist {
@@ -88,4 +90,11 @@ export async function addVideoToPlaylist(playlistId: string, videoId: string): P
 export async function removeVideoFromPlaylist(playlistId: string, videoId: string): Promise<void> {
     const user = await getUserOrFail();
     await db.collection<Playlist>("playlists").updateOne({ _id: new ObjectId(playlistId), userId: user.id }, { $pull: { videoIds: new ObjectId(videoId) } });
+}
+
+export async function addThumbnailToVideo(videoId: string): Promise<string> {
+    const user = await getUserOrFail();
+    await db.collection<Video>("media").updateOne({ _id: new ObjectId(videoId), userId: user.id }, { $set: { hasThumbnail: true } });
+
+    return generateSignedUrl(`${videoId}/thumbnail.webp`, "PUT", 300);
 }
