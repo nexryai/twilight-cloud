@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { addThumbnailToVideo } from "@/actions/media";
+import { encryptMetadata } from "@/cipher/block";
 import { createEncryptTransformStream } from "@/cipher/stream";
 import type { VideoPlayerRef } from "@/components/VideoPlayer";
 
@@ -14,6 +15,7 @@ const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
 
 interface PlayerViewProps {
     contentKey: CryptoKey;
+    metadataKey: CryptoKey;
     mediaId: string;
     manifestName: string;
 }
@@ -22,7 +24,7 @@ export interface PlayerViewHandle {
     handleCaptureThumbnail: () => void;
 }
 
-const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, mediaId, manifestName }, ref) => {
+const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, metadataKey, mediaId, manifestName }, ref) => {
     const [isSwReady, setIsSwReady] = useState(false);
     const playerRef = useRef<VideoPlayerRef>(null);
 
@@ -32,7 +34,7 @@ const PlayerView = forwardRef<PlayerViewHandle, PlayerViewProps>(({ contentKey, 
             if (!captured) return;
 
             try {
-                const uploadUrl = await addThumbnailToVideo(mediaId, captured.hash);
+                const uploadUrl = await addThumbnailToVideo(mediaId, await encryptMetadata(captured.hash, metadataKey));
                 console.log(`blurhash: ${captured.hash}`);
 
                 const response = await fetch(captured.image);
