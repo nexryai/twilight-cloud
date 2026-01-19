@@ -13,6 +13,29 @@ import CipherText from "./CipherText";
 
 type DecryptedVideo = Video & { decryptedName: string };
 
+const VideoThumbnail = ({ video, isSwReady }: { video: DecryptedVideo; isSwReady: boolean }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const showThumbnail = video.hasThumbnail && isSwReady;
+
+    return (
+        <a href={`/player/${video._id}`} className="relative block w-full h-42 overflow-hidden rounded-lg bg-gray-50">
+            {showThumbnail && <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className={`object-cover w-full h-full transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`} onLoad={() => setIsLoaded(true)} />}
+
+            {!isLoaded && (
+                <div className="absolute inset-0 w-full h-full">
+                    {video.blurhash ? (
+                        <CipherBlurhash encryptedHash={video.blurhash} />
+                    ) : (
+                        <div className="flex justify-center items-center p-2 text-gray-500 group-hover:text-black transition-all duration-300 w-full h-full">
+                            <IconVideo size={20} />
+                        </div>
+                    )}
+                </div>
+            )}
+        </a>
+    );
+};
+
 const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; metadataKey: CryptoKey }) => {
     const [videos, setVideos] = useState<Video[]>([]);
     const [decryptedVideos, setDecryptedVideos] = useState<DecryptedVideo[]>([]);
@@ -174,17 +197,7 @@ const VideoDashboard = ({ contentKey, metadataKey }: { contentKey: CryptoKey; me
                                             {vids.map((video) => (
                                                 <div key={video._id.toString()} className="flex flex-col justify-between gap-3 items-center bg-white p-4 rounded-xl border border-gray-200 group transition-colors hover:border-gray-300">
                                                     <div className="flex flex-col gap-3 items-center w-full">
-                                                        <a href={`/player/${video._id}`} className="w-full h-42">
-                                                            {video.hasThumbnail && isSwReady ? (
-                                                                <img src={`/virtual-dash/thumbnail.webp?mediaId=${video._id}`} alt={video.decryptedName} className="object-cover rounded-lg w-full h-full" />
-                                                            ) : video.blurhash ? (
-                                                                <CipherBlurhash encryptedHash={video.blurhash} />
-                                                            ) : (
-                                                                <div className="flex justify-center items-center p-2 bg-gray-50 rounded-lg text-gray-500 group-hover:text-black transition-all duration-300 w-full h-full">
-                                                                    <IconVideo size={20} />
-                                                                </div>
-                                                            )}
-                                                        </a>
+                                                        <VideoThumbnail video={video} isSwReady={isSwReady} />
                                                         <div className="flex justify-between items-center gap-2 w-full">
                                                             {/* DO NOT REMOVE min-w-0: Stupid WebKit won't break lines without it ¯\_(ツ)_/¯¯ */}
                                                             <a href={`/player/${video._id}`} className="min-w-0  ml-2 overflow-hidden font-medium text-gray-700 group-hover:text-black wrap-break-word">
