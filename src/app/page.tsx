@@ -18,7 +18,7 @@ export default async function Home() {
             </div>
             <div id="home-content">
                 <CipherGuard encryptedKeys={encryptedKeys} Component={VideoDashboard} componentProps={{ videos, initialPlaylists: playlists }}>
-                    <div className="mt-32 flex space-x-2 justify-center items-center">
+                    <div className="hidden mt-32 flex space-x-2 justify-center items-center">
                         <span className="sr-only">Loading...</span>
                         <div className="h-1.5 w-1.5  bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                         <div className="h-1.5 w-1.5 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
