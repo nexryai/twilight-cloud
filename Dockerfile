@@ -4,6 +4,12 @@ WORKDIR /var/build
 
 COPY . .
 
+ENV DATABASE_URL="mongodb://localhost:27017/unused"
+ENV AWS_ACCESS_KEY_ID="placeholder"
+ENV AWS_SECRET_ACCESS_KEY="placeholder"
+ENV AWS_S3_REGION="us-east-1"
+ENV AWS_S3_ENDPOINT="http://localhost:9000"
+ENV AWS_S3_BUCKET="placeholder"
 RUN apk add --no-cache ca-certificates \
     && npm install -g pnpm \
     && pnpm install --frozen-lockfile \
