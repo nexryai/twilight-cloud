@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
     output: "standalone",
     experimental: {
         serverActions: {
-            allowedOrigins: ["localhost:3000", "*.app.github.dev"],
+            allowedOrigins: ["localhost:3000", "*.app.github.dev", "twilight.nexryai.me"],
             bodySizeLimit: "10mb",
         },
     },
