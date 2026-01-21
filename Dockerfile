@@ -1,4 +1,4 @@
-FROM node:24-alpine AS builder
+FROM alpine:edge AS builder
 
 WORKDIR /var/build
 
@@ -10,20 +10,19 @@ ENV AWS_SECRET_ACCESS_KEY="placeholder"
 ENV AWS_S3_REGION="us-east-1"
 ENV AWS_S3_ENDPOINT="http://localhost:9000"
 ENV AWS_S3_BUCKET="placeholder"
-RUN apk add --no-cache ca-certificates \
-    && npm install -g pnpm \
+RUN apk add --no-cache nodejs pnpm ca-certificates \
     && pnpm install --frozen-lockfile \
     && pnpm build
 
 
-FROM node:24-alpine AS runner
+FROM alpine:edge AS runner
 
 WORKDIR /var/app
 
 ARG UID=991
 ARG GID=991
 
-RUN apk add --no-cache ca-certificates tini \
+RUN apk add --no-cache ca-certificates nodejs tini \
     && addgroup -g "${GID}" app \
     && adduser -u "${UID}" -G app -D app
 
