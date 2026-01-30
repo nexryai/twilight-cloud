@@ -17,7 +17,7 @@
         "@radix-ui/react-tabs": "^1.1.13",
         "@tabler/icons-react": "^3.36.1",
         "aws4fetch": "^1.0.20",
-        "better-auth": "^1.4.16",
+        "better-auth": "^1.4.18",
         "blurhash": "^2.0.5",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
