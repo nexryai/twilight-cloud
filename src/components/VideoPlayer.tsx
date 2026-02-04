@@ -39,6 +39,9 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ mediaId, man
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current) return;
 
+        // related: https://github.com/shaka-project/shaka-player/issues/9646
+        shaka.polyfill.installAll();
+
         // biome-ignore lint/suspicious/noExplicitAny: ignore here
         const handleError = (error: any) => {
             if (error instanceof Error) {
