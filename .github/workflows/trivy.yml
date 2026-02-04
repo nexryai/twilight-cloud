@@ -19,13 +19,11 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                node-version: 24
-            
+            - name: Use Node.js
+              run: sudo snap install node --channel=24/stable --classic
+
             - name: Install pnpm
-              run: corepack disable && npm install -g pnpm
+              run: npm install -g pnpm
 
             - name: Install dependencies
               run: pnpm install
