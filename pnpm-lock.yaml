@@ -60,8 +60,8 @@ importers:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
       shaka-player:
-        specifier: ^4.16.16
-        version: 4.16.16
+        specifier: ^5.0.7
+        version: 5.0.7
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -1602,8 +1602,8 @@ packages:
   set-cookie-parser@2.7.2:
     resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
 
-  shaka-player@4.16.16:
-    resolution: {integrity: sha512-ME73Ro7eZufo1XIv+2yOalGKUe2fPDX+6bLYeydq5gqMZFX+vgSFLfmaGTIQNNqNmrbFKRxLGsk79If5jx+Z+Q==}
+  shaka-player@5.0.7:
+    resolution: {integrity: sha512-dUcGDac2yRJsgLSwdYqkaOLu9X8Ih+skE5tC4odUuKtNVRCLp/FaKfXydcusRcnkHWhGZN8rG8+HTJQJs7HN1g==}
     engines: {node: '>=18'}
 
   sharp@0.34.5:
@@ -2974,7 +2974,7 @@ snapshots:
 
   set-cookie-parser@2.7.2: {}
 
-  shaka-player@4.16.16: {}
+  shaka-player@5.0.7: {}
 
   sharp@0.34.5:
     dependencies:
